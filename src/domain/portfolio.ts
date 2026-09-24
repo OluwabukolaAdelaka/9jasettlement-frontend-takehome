@@ -1,8 +1,6 @@
 import Big from "big.js";
 import { type Currency, MINOR_DIGITS } from "./currency";
-
-//Rates show how much of each currency equals 1 base unit. The base rate defaults to 1.
-export type RatesAgainstBase = Partial<Record<Currency, string>>;
+import type { RatesAgainstBase } from "./rates";
 
 export interface CurrencyAmount {
   currency: Currency;

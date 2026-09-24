@@ -1,6 +1,7 @@
 import { AppHeader } from "@/components/layout/AppHeader";
 import { SectionPlaceholder } from "@/components/layout/SectionPlaceholder";
 import { Card } from "@/components/ui/Card";
+import { WalletCard } from "@/components/wallet/WalletCard";
 
 export default function Home() {
   return (
@@ -13,9 +14,7 @@ export default function Home() {
       >
         <h1 className="sr-only">Swapr wallet</h1>
         <div className="flex min-w-0 flex-col gap-4 sm:gap-6">
-          <Card id="wallet" title="Wallet" description="Your balance in each currency.">
-            <SectionPlaceholder rows={5} />
-          </Card>
+          <WalletCard />
           <Card id="convert" title="Convert" description="Lock a rate for 30 seconds, then confirm.">
             <SectionPlaceholder rows={4} />
           </Card>

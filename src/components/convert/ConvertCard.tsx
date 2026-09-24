@@ -12,9 +12,11 @@ import {
 } from "@/domain/convertForm";
 import { minorToMajorString } from "@/domain/money";
 import { useBalances } from "@/hooks/useBalances";
+import { useConfirmConversion } from "@/hooks/useConfirmConversion";
 import { useConversionEstimate } from "@/hooks/useConversionEstimate";
 import { useQuote } from "@/hooks/useQuote";
 import { AmountField } from "./AmountField";
+import { ConversionComplete } from "./ConversionComplete";
 import { CurrencyPair } from "./CurrencyPair";
 import { EstimateSummary } from "./EstimateSummary";
 import { AMOUNT_TOO_SMALL_MESSAGE, draftErrorMessage, shortfallMessage } from "./messages";
@@ -28,6 +30,7 @@ export function ConvertCard() {
   const { rates, estimate } = useConversionEstimate(values.sell, draft.ok ? draft.input : null);
   const balances = useBalances();
   const quote = useQuote();
+  const confirm = useConfirmConversion();
 
   const available = balances.data?.find((balance) => balance.currency === values.sell)?.minor;
   const shortfall =
@@ -48,14 +51,13 @@ export function ConvertCard() {
     ((quote.state.phase === "requesting" || quote.state.phase === "failed") && quote.state.previous !== null);
   const canRequestQuote = draft.ok && amountError === null && quote.state.phase !== "requesting";
 
-  //Any edit invalidates the current quote: it was only ever valid for the exact inputs it was issued for.
   const edit = (change: (current: ConvertFormValues) => ConvertFormValues) => {
     setValues(change);
     quote.reset();
+    confirm.reset();
   };
   const update = (patch: Partial<ConvertFormValues>) => edit((current) => ({ ...current, ...patch }));
 
-  //Swapping flips the side too, so the typed amount keeps its currency ("send 100 USD" -> "receive 100 USD").
   const swap = () =>
     edit((current) => ({
       ...current,
@@ -77,7 +79,9 @@ export function ConvertCard() {
   };
 
   const requestQuote = () => {
-    if (draft.ok && canRequestQuote) void quote.request(draft.input);
+    if (!draft.ok || !canRequestQuote) return;
+    confirm.reset();
+    void quote.request(draft.input);
   };
 
   const submit = (event: SubmitEvent<HTMLFormElement>) => {
@@ -85,9 +89,25 @@ export function ConvertCard() {
     if (!showingQuote) requestQuote();
   };
 
+  const startOver = () => {
+    confirm.reset();
+    quote.reset();
+    setValues((current) => ({ ...current, amountText: "" }));
+  };
+
+  if (confirm.state.phase === "done") {
+    return (
+      <Card id="convert" title="Convert" description="Lock a rate for 30 seconds, then confirm.">
+        <ConversionComplete receipt={confirm.state.receipt} onNewConversion={startOver} />
+      </Card>
+    );
+  }
+
   return (
     <Card id="convert" title="Convert" description="Lock a rate for 30 seconds, then confirm.">
       <form className="flex flex-col gap-5" onSubmit={submit} noValidate>
+        {/* Inputs are locked while confirming, so the quote being confirmed can't change underneath it. */}
+        <fieldset disabled={confirm.state.phase === "submitting"} className="flex min-w-0 flex-col gap-5">
         <CurrencyPair
           sell={values.sell}
           buy={values.buy}
@@ -106,6 +126,7 @@ export function ConvertCard() {
           sellCurrency={values.sell}
           available={available}
         />
+        </fieldset>
 
         {!showingQuote && (
           <>
@@ -131,7 +152,12 @@ export function ConvertCard() {
           </>
         )}
 
-        <QuoteSection state={quote.state} onRefresh={requestQuote} />
+        <QuoteSection
+          state={quote.state}
+          confirmState={confirm.state}
+          onRefresh={requestQuote}
+          onConfirm={(locked) => void confirm.confirm(locked)}
+        />
       </form>
     </Card>
   );

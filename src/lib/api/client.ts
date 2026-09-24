@@ -89,3 +89,7 @@ export function getDebugState(): Promise<DebugStateResponse> {
 export function runDebugAction(body: DebugActionRequest): Promise<DebugStateResponse> {
   return request<DebugStateResponse>("/api/debug", { method: "POST", body: JSON.stringify(body) });
 }
+
+export function toApiError(error: unknown): ApiError {
+  return error instanceof ApiError ? error : new ApiError(0, "UNKNOWN_ERROR", "Something went wrong. Please try again.");
+}

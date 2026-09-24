@@ -9,7 +9,7 @@ import {
   type ConversionInput,
   type QuoteComparison,
 } from "@/domain/quote";
-import { ApiError, createQuote } from "@/lib/api/client";
+import { type ApiError, createQuote, toApiError } from "@/lib/api/client";
 import type { CreateQuoteRequest, QuoteResponse } from "@/lib/api/types";
 
 export interface LockedQuote {
@@ -82,9 +82,7 @@ export function useQuote() {
       setState({ phase: "ready", quote, comparison });
     } catch (error) {
       if (requestId !== latestRequest.current) return;
-      const apiError =
-        error instanceof ApiError ? error : new ApiError(0, "UNKNOWN_ERROR", "Something went wrong. Please try again.");
-      setState({ phase: "failed", error: apiError, previous });
+      setState({ phase: "failed", error: toApiError(error), previous });
     }
   }
 

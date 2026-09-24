@@ -1,6 +1,6 @@
 import Big from "big.js";
 import { type Currency, MINOR_DIGITS } from "./currency";
-import type { RatesAgainstBase } from "./rates";
+import { isUsableRate, type RatesAgainstBase } from "./rates";
 
 
 export const RATE_DECIMALS = 8;
@@ -96,4 +96,19 @@ export function priceConversion(mid: Big, sell: Currency, buy: Currency, fixed: 
     ok: true,
     priced: { sellAmount, buyAmount, rate: rateString, fee, totalDebit: sellAmount + fee },
   };
+}
+
+export type EstimateResult = PriceResult | { ok: false; reason: "rate_unavailable" };
+
+//Like priceConversion, but from a live rates payload that may be missing or contain unusable rates.
+export function priceFromRates(
+  rates: RatesAgainstBase,
+  base: Currency,
+  sell: Currency,
+  buy: Currency,
+  fixed: FixedAmount,
+): EstimateResult {
+  const needed = [sell, buy].filter((currency) => currency !== base);
+  if (!needed.every((currency) => isUsableRate(rates[currency]))) return { ok: false, reason: "rate_unavailable" };
+  return priceConversion(midRate(rates, base, sell, buy), sell, buy, fixed);
 }

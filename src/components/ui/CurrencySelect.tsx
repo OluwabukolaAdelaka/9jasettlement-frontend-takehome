@@ -10,9 +10,10 @@ interface CurrencySelectProps {
   onChange: (currency: Currency) => void;
   hideLabel?: boolean;
   disabled?: boolean;
+  invalid?: boolean;
+  describedBy?: string;
   className?: string;
 }
-
 
 export function CurrencySelect({
   label,
@@ -20,6 +21,8 @@ export function CurrencySelect({
   onChange,
   hideLabel = false,
   disabled,
+  invalid = false,
+  describedBy,
   className,
 }: CurrencySelectProps) {
   const id = useId();
@@ -32,10 +35,15 @@ export function CurrencySelect({
         id={id}
         value={value}
         disabled={disabled}
+        aria-invalid={invalid || undefined}
+        aria-describedby={describedBy}
         onChange={(event) => {
           if (isCurrency(event.target.value)) onChange(event.target.value);
         }}
-        className="h-10 rounded-lg border border-line-strong bg-surface pl-3 pr-8 text-sm font-medium disabled:bg-canvas disabled:text-ink-muted"
+        className={cx(
+          "h-10 rounded-lg border bg-surface pl-3 pr-8 text-sm font-medium disabled:bg-canvas disabled:text-ink-muted",
+          invalid ? "border-down" : "border-line-strong",
+        )}
       >
         {CURRENCIES.map((currency) => (
           <option key={currency} value={currency}>

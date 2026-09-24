@@ -6,8 +6,30 @@ import {
   computeFee,
   midRate,
   priceConversion,
+  priceFromRates,
   sellToBuyMinor,
 } from "./pricing";
+
+describe("priceFromRates", () => {
+  const ratesUsd = { NGN: "1500", EUR: "0.8" };
+
+  it("prices from a live rates payload", () => {
+    const result = priceFromRates(ratesUsd, "USD", "EUR", "NGN", { side: "sell", amount: 8000n });
+    //€80 at 1875 × 0.995 = 1865.625 -> ₦149,250.00
+    expect(result.ok && result.priced.buyAmount).toBe(14925000n);
+  });
+
+  it.each([
+    ["missing", { NGN: "1500" }],
+    ["zero", { NGN: "1500", EUR: "0" }],
+    ["blank", { NGN: "1500", EUR: "" }],
+  ])("reports a %s rate as unavailable instead of dividing by it", (_, rates) => {
+    expect(priceFromRates(rates, "USD", "EUR", "NGN", { side: "sell", amount: 8000n })).toEqual({
+      ok: false,
+      reason: "rate_unavailable",
+    });
+  });
+});
 
 describe("computeFee", () => {
   it("is 0.5% of the sell amount", () => {

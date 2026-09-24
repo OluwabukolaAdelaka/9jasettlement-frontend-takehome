@@ -2,16 +2,13 @@
 
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
-import { AlertIcon, ClockIcon, RefreshIcon } from "@/components/ui/icons";
+import { FreshnessStatus } from "@/components/ui/FreshnessStatus";
+import { AlertIcon, RefreshIcon } from "@/components/ui/icons";
 import { Money } from "@/components/ui/Money";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { StatusPill } from "@/components/ui/StatusPill";
 import type { Currency } from "@/domain/currency";
-import { isStale } from "@/domain/freshness";
 import { portfolioTotal, type CurrencyAmount } from "@/domain/portfolio";
-import { useNow } from "@/hooks/useNow";
 import { useRates } from "@/hooks/useRates";
-import { formatTime } from "@/lib/formatTime";
 
 interface PortfolioTotalProps {
   balances: readonly CurrencyAmount[];
@@ -21,7 +18,6 @@ interface PortfolioTotalProps {
 
 export function PortfolioTotal({ balances, display }: PortfolioTotalProps) {
   const rates = useRates(display);
-  const now = useNow();
 
   if (rates.isPending) {
     return (
@@ -57,7 +53,6 @@ export function PortfolioTotal({ balances, display }: PortfolioTotalProps) {
   }
 
   const result = portfolioTotal(balances, display, rates.data.rates, rates.data.base);
-  const stale = isStale(rates.dataUpdatedAt, now);
 
   return (
     <TotalFrame display={display}>
@@ -71,21 +66,7 @@ export function PortfolioTotal({ balances, display }: PortfolioTotalProps) {
         </p>
       )}
 
-      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-ink-muted">
-        <span className="inline-flex items-center gap-1">
-          <ClockIcon width={14} height={14} />
-          Updated{" "}
-          <time dateTime={new Date(rates.dataUpdatedAt).toISOString()}>{formatTime(rates.dataUpdatedAt)}</time>
-        </span>
-        {/* Always rendered, so screen readers announce the badge when it appears. */}
-        <span aria-live="polite">
-          {stale && (
-            <StatusPill tone="warning" icon={<AlertIcon width={12} height={12} />}>
-              Stale: rates may be out of date{rates.isError ? ", retrying…" : ""}
-            </StatusPill>
-          )}
-        </span>
-      </div>
+      <FreshnessStatus className="mt-2" updatedAt={rates.dataUpdatedAt} retrying={rates.failureCount > 0} />
     </TotalFrame>
   );
 }

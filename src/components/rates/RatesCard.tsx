@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { CurrencySelect } from "@/components/ui/CurrencySelect";
+import { FreshnessStatus } from "@/components/ui/FreshnessStatus";
 import { RefreshIcon } from "@/components/ui/icons";
 import { StateMessage } from "@/components/ui/StateMessage";
 import type { Currency } from "@/domain/currency";
@@ -29,7 +30,17 @@ export function RatesCard() {
 
 function RatesContent({ base }: { base: Currency }) {
   const { query, board } = useRateBoard(base);
+  
+  return (
+    <div className="flex flex-col gap-3">
+      <FreshnessStatus updatedAt={query.dataUpdatedAt} retrying={query.failureCount > 0} />
+      <RatesBody base={base} query={query} board={board} />
+    </div>
+  );
+}
 
+
+function RatesBody({ base, query, board }: { base: Currency } & ReturnType<typeof useRateBoard>) {
   if (board) return <RateList base={base} board={board} />;
 
   if (query.isError) {

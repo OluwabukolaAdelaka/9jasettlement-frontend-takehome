@@ -1,16 +1,33 @@
 import Big from "big.js";
 import type { Currency } from "@/domain/currency";
+import type { ConversionResponse } from "@/lib/api/types";
 
 //In-memory state for the mock API; it resets when the server restarts.
 
 export interface DebugFlags {
- //Forces /api/rates requests to return 503.
   ratesOutage: boolean;
+  forceNextConversionExpired: boolean;
+}
+
+export interface StoredQuote {
+  id: string;
+  sellCurrency: Currency;
+  buyCurrency: Currency;
+  sellAmount: bigint;
+  buyAmount: bigint;
+  rate: string;
+  fee: bigint;
+  createdAtMs: number;
+  expiresAtMs: number;
+  usedByConversionId: string | null;
 }
 
 export interface ServerState {
   balances: Record<Currency, bigint>;
   usdRates: Record<Currency, Big>;
+  quotes: Map<string, StoredQuote>;
+  conversions: ConversionResponse[];
+  idempotency: Map<string, ConversionResponse>;
   debug: DebugFlags;
 }
 
@@ -40,11 +57,18 @@ function mapValues<T>(record: Record<Currency, string>, fn: (value: string) => T
   };
 }
 
+export function initialBalances(): Record<Currency, bigint> {
+  return mapValues(INITIAL_BALANCES, (amount) => BigInt(amount));
+}
+
 export function createInitialState(): ServerState {
   return {
-    balances: mapValues(INITIAL_BALANCES, (amount) => BigInt(amount)),
+    balances: initialBalances(),
     usdRates: mapValues(INITIAL_USD_RATES, (rate) => new Big(rate)),
-    debug: { ratesOutage: false },
+    quotes: new Map(),
+    conversions: [],
+    idempotency: new Map(),
+    debug: { ratesOutage: false, forceNextConversionExpired: false },
   };
 }
 

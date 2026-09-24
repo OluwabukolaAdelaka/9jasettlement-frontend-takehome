@@ -1,5 +1,14 @@
 import type { Currency } from "@/domain/currency";
-import type { ApiErrorBody, BalancesResponse, RatesResponse } from "./types";
+import type {
+  ApiErrorBody,
+  BalancesResponse,
+  ConversionResponse,
+  ConversionsResponse,
+  CreateConversionRequest,
+  CreateQuoteRequest,
+  QuoteResponse,
+  RatesResponse,
+} from "./types";
 
 //The UI talks to the mock API through this client.
 
@@ -57,4 +66,16 @@ export function getBalances(): Promise<BalancesResponse> {
 
 export function getRates(base: Currency): Promise<RatesResponse> {
   return request<RatesResponse>(`/api/rates?base=${encodeURIComponent(base)}`);
+}
+
+export function createQuote(body: CreateQuoteRequest): Promise<QuoteResponse> {
+  return request<QuoteResponse>("/api/quotes", { method: "POST", body: JSON.stringify(body) });
+}
+
+export function createConversion(body: CreateConversionRequest): Promise<ConversionResponse> {
+  return request<ConversionResponse>("/api/conversions", { method: "POST", body: JSON.stringify(body) });
+}
+
+export function getConversions(): Promise<ConversionsResponse> {
+  return request<ConversionsResponse>("/api/conversions");
 }

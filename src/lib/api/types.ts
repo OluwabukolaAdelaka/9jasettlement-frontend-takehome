@@ -69,6 +69,16 @@ export interface ConversionsResponse {
   conversions: ConversionResponse[];
 }
 
+export interface DebugStateResponse {
+  ratesOutage: boolean;
+  forceNextConversionExpired: boolean;
+}
+
+export type DebugActionRequest =
+  | { action: "setRatesOutage"; enabled: boolean }
+  | { action: "forceNextConversionExpired" }
+  | { action: "resetBalances" };
+
 //Error codes returned by the mock API.
 export type ApiErrorCode =
   | "INVALID_BASE"

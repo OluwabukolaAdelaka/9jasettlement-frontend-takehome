@@ -6,6 +6,8 @@ import type {
   ConversionsResponse,
   CreateConversionRequest,
   CreateQuoteRequest,
+  DebugActionRequest,
+  DebugStateResponse,
   QuoteResponse,
   RatesResponse,
 } from "./types";
@@ -78,4 +80,12 @@ export function createConversion(body: CreateConversionRequest): Promise<Convers
 
 export function getConversions(): Promise<ConversionsResponse> {
   return request<ConversionsResponse>("/api/conversions");
+}
+
+export function getDebugState(): Promise<DebugStateResponse> {
+  return request<DebugStateResponse>("/api/debug");
+}
+
+export function runDebugAction(body: DebugActionRequest): Promise<DebugStateResponse> {
+  return request<DebugStateResponse>("/api/debug", { method: "POST", body: JSON.stringify(body) });
 }

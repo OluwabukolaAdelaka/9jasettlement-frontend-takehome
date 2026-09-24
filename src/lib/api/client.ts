@@ -1,20 +1,60 @@
 import type { Currency } from "@/domain/currency";
-import { SAMPLE_BALANCES, sampleRatesFor } from "./sampleData";
-import type { BalancesResponse, RatesResponse } from "./types";
+import type { ApiErrorBody, BalancesResponse, RatesResponse } from "./types";
 
-//The only place the UI gets data from. Components and hooks never know where it comes from.
-//For now it returns sample data; later each function becomes a fetch() to our mock API routes.
+//The UI talks to the mock API through this client.
 
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+export class ApiError extends Error {
+  constructor(
+    //HTTP status, or 0 when the request never reached the server.
+    readonly status: number,
+    //Error code from the API, e.g. "quote expired", or "network error".
+    readonly code: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
 }
 
-export async function getBalances(): Promise<BalancesResponse> {
-  await delay(600);
-  return SAMPLE_BALANCES;
+function isApiErrorBody(body: unknown): body is ApiErrorBody {
+  if (typeof body !== "object" || body === null || !("error" in body)) return false;
+  const { error } = body;
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof error.code === "string" &&
+    "message" in error &&
+    typeof error.message === "string"
+  );
 }
 
-export async function getRates(base: Currency): Promise<RatesResponse> {
-  await delay(400);
-  return sampleRatesFor(base);
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  let response: Response;
+  try {
+    response = await fetch(path, {
+      ...init,
+      cache: "no-store",
+      headers: { "Content-Type": "application/json", ...init?.headers },
+    });
+  } catch {
+    throw new ApiError(0, "NETWORK_ERROR", "We couldn't reach the server. Check your connection.");
+  }
+
+  const body: unknown = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    if (isApiErrorBody(body)) throw new ApiError(response.status, body.error.code, body.error.message);
+    throw new ApiError(response.status, "UNKNOWN_ERROR", "Something went wrong. Please try again.");
+  }
+
+  return body as T;
+}
+
+export function getBalances(): Promise<BalancesResponse> {
+  return request<BalancesResponse>("/api/balances");
+}
+
+export function getRates(base: Currency): Promise<RatesResponse> {
+  return request<RatesResponse>(`/api/rates?base=${encodeURIComponent(base)}`);
 }

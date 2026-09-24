@@ -1,5 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { isUsableRate, mergeWithLastGood, rateDirection, rateDirections } from "./rates";
+import { formatRate, isUsableRate, mergeWithLastGood, rateDirection, rateDirections } from "./rates";
+
+describe("formatRate", () => {
+  it("groups thousands and drops trailing zeros beyond 2 decimals", () => {
+    expect(formatRate("1532.45120000", "en-US")).toBe("1,532.4512");
+    expect(formatRate("147.82000000", "en-US")).toBe("147.82");
+    expect(formatRate("1", "en-US")).toBe("1.00");
+  });
+
+  it("keeps all 8 decimals for very small rates", () => {
+    expect(formatRate("0.00065255", "en-US")).toBe("0.00065255");
+  });
+
+  it("does not lose digits on large rates", () => {
+    expect(formatRate("123456789.12345678", "en-US")).toBe("123,456,789.12345678");
+  });
+});
 
 describe("isUsableRate", () => {
   it.each(["1532.45120000", "0.74210000", "147.82", "1"])("accepts %j", (value) => {

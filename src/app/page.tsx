@@ -1,5 +1,6 @@
 import { AppHeader } from "@/components/layout/AppHeader";
 import { SectionPlaceholder } from "@/components/layout/SectionPlaceholder";
+import { RatesCard } from "@/components/rates/RatesCard";
 import { Card } from "@/components/ui/Card";
 import { WalletCard } from "@/components/wallet/WalletCard";
 
@@ -20,9 +21,7 @@ export default function Home() {
           </Card>
         </div>
         <div className="flex min-w-0 flex-col gap-4 sm:gap-6">
-          <Card id="rates" title="Live rates" description="Mid-market rates, refreshed every 5 seconds.">
-            <SectionPlaceholder rows={4} />
-          </Card>
+          <RatesCard />
           <Card id="history" title="History" description="Completed conversions, newest first.">
             <SectionPlaceholder rows={3} />
           </Card>

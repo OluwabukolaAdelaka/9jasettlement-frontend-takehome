@@ -35,6 +35,19 @@ export function rateDirections(
 }
 
 
+const rateFormatters = new Map<string, Intl.NumberFormat>();
+
+//Formats rates for display with 2–8 decimal places.
+export function formatRate(rate: string, locale?: string): string {
+  const key = locale ?? "";
+  let formatter = rateFormatters.get(key);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 8 });
+    rateFormatters.set(key, formatter);
+  }
+  return formatter.format(rate as `${number}`);
+}
+
 //Uses the previous rate when the new rate is missing or invalid.
 export function mergeWithLastGood(
   previous: RatesAgainstBase | undefined,

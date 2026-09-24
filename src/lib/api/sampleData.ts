@@ -20,10 +20,16 @@ export const SAMPLE_RATES_USD: RatesResponse = {
   timestamp: "2026-09-24T10:15:05.000Z",
 };
 
+//TEMPORARY: random ±0.5% drift so the rate arrows can be checked before the mock API exists.
+function drift(rate: Big): Big {
+  const factor = new Big(1).plus(new Big(Math.random()).minus(0.5).times(0.01));
+  return rate.times(factor);
+}
+
 //Re-bases the USD sample rates onto any currency, e.g. for the wallet total in NGN.
 export function sampleRatesFor(base: Currency): RatesResponse {
   const usdRate = (currency: Currency) =>
-    currency === "USD" ? new Big(1) : new Big(SAMPLE_RATES_USD.rates[currency] ?? "0");
+    currency === "USD" ? new Big(1) : drift(new Big(SAMPLE_RATES_USD.rates[currency] ?? "0"));
 
   const rates: Partial<Record<Currency, string>> = {};
   for (const currency of CURRENCIES) {

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type SubmitEvent } from "react";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import {
   amountCurrency,
@@ -12,10 +13,12 @@ import {
 import { minorToMajorString } from "@/domain/money";
 import { useBalances } from "@/hooks/useBalances";
 import { useConversionEstimate } from "@/hooks/useConversionEstimate";
+import { useQuote } from "@/hooks/useQuote";
 import { AmountField } from "./AmountField";
 import { CurrencyPair } from "./CurrencyPair";
 import { EstimateSummary } from "./EstimateSummary";
 import { AMOUNT_TOO_SMALL_MESSAGE, draftErrorMessage, shortfallMessage } from "./messages";
+import { QuoteSection } from "./QuoteSection";
 
 const INITIAL_VALUES: ConvertFormValues = { sell: "USD", buy: "NGN", side: "sell", amountText: "" };
 
@@ -24,6 +27,7 @@ export function ConvertCard() {
   const draft = parseDraft(values);
   const { rates, estimate } = useConversionEstimate(values.sell, draft.ok ? draft.input : null);
   const balances = useBalances();
+  const quote = useQuote();
 
   const available = balances.data?.find((balance) => balance.currency === values.sell)?.minor;
   const shortfall =
@@ -39,16 +43,28 @@ export function ConvertCard() {
           ? shortfallMessage(shortfall)
           : null;
 
-  const update = (patch: Partial<ConvertFormValues>) => setValues((current) => ({ ...current, ...patch }));
+  const showingQuote =
+    quote.state.phase === "ready" ||
+    ((quote.state.phase === "requesting" || quote.state.phase === "failed") && quote.state.previous !== null);
+  const canRequestQuote = draft.ok && amountError === null && quote.state.phase !== "requesting";
 
+  //Any edit invalidates the current quote: it was only ever valid for the exact inputs it was issued for.
+  const edit = (change: (current: ConvertFormValues) => ConvertFormValues) => {
+    setValues(change);
+    quote.reset();
+  };
+  const update = (patch: Partial<ConvertFormValues>) => edit((current) => ({ ...current, ...patch }));
+
+  //Swapping flips the side too, so the typed amount keeps its currency ("send 100 USD" -> "receive 100 USD").
   const swap = () =>
-    setValues((current) => ({
+    edit((current) => ({
       ...current,
       sell: current.buy,
       buy: current.sell,
       side: current.side === "sell" ? "buy" : "sell",
     }));
 
+  //Switching send/receive pre-fills the other side from the estimate, so the conversion stays the same size.
   const changeSide = (side: AmountSide) => {
     if (side === values.side) return;
     const counterpart =
@@ -60,9 +76,18 @@ export function ConvertCard() {
     update({ side, amountText: counterpart });
   };
 
+  const requestQuote = () => {
+    if (draft.ok && canRequestQuote) void quote.request(draft.input);
+  };
+
+  const submit = (event: SubmitEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!showingQuote) requestQuote();
+  };
+
   return (
     <Card id="convert" title="Convert" description="Lock a rate for 30 seconds, then confirm.">
-      <form className="flex flex-col gap-5" onSubmit={(event) => event.preventDefault()} noValidate>
+      <form className="flex flex-col gap-5" onSubmit={submit} noValidate>
         <CurrencyPair
           sell={values.sell}
           buy={values.buy}
@@ -81,16 +106,32 @@ export function ConvertCard() {
           sellCurrency={values.sell}
           available={available}
         />
-        <EstimateSummary
-          sell={values.sell}
-          buy={values.buy}
-          side={values.side}
-          hasValidAmount={draft.ok}
-          estimate={estimate}
-          ratesLoading={rates.isPending}
-          ratesUpdatedAt={rates.dataUpdatedAt}
-          ratesRetrying={rates.failureCount > 0}
-        />
+
+        {!showingQuote && (
+          <>
+            <EstimateSummary
+              sell={values.sell}
+              buy={values.buy}
+              side={values.side}
+              hasValidAmount={draft.ok}
+              estimate={estimate}
+              ratesLoading={rates.isPending}
+              ratesUpdatedAt={rates.dataUpdatedAt}
+              ratesRetrying={rates.failureCount > 0}
+            />
+            <Button
+              type="submit"
+              size="lg"
+              fullWidth
+              disabled={!canRequestQuote}
+              loading={quote.state.phase === "requesting"}
+            >
+              {quote.state.phase === "requesting" ? "Getting your quote…" : "Get quote"}
+            </Button>
+          </>
+        )}
+
+        <QuoteSection state={quote.state} onRefresh={requestQuote} />
       </form>
     </Card>
   );

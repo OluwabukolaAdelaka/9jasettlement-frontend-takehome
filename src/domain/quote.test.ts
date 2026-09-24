@@ -5,6 +5,7 @@ import {
   isQuoteExpired,
   isSameConversionInput,
   quoteMsRemaining,
+  quoteTimeLeftMs,
   secondsToShow,
   type ConversionInput,
 } from "./quote";
@@ -54,6 +55,19 @@ describe("quoteMsRemaining", () => {
 
   it("throws on an invalid timestamp instead of treating it as valid", () => {
     expect(() => quoteMsRemaining("not a date", 0, SERVER_MS)).toThrow();
+  });
+});
+
+describe("quoteTimeLeftMs", () => {
+  const timing = { expiresAt: EXPIRES_AT, serverTime: SERVER_TIME, clockOffsetMs: 0 };
+
+  it("never shows more than the quote's 30 s lifetime, even with a clock reading from before it arrived", () => {
+    expect(quoteTimeLeftMs(timing, SERVER_MS - 800)).toBe(30_000);
+  });
+
+  it("otherwise matches the time remaining", () => {
+    expect(quoteTimeLeftMs(timing, SERVER_MS + 5_000)).toBe(25_000);
+    expect(quoteTimeLeftMs(timing, SERVER_MS + 40_000)).toBe(0);
   });
 });
 

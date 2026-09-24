@@ -62,8 +62,8 @@ describe("formatMoney", () => {
     expect(formatMoney(0n, "GBP", "en-GB")).toBe("£0.00");
   });
 
-  it("formats NGN with the naira symbol", () => {
-    expect(formatMoney(125000050n, "NGN", "en-NG")).toBe("₦1,250,000.50");
+  it.each(["en-NG", "en-US", "en-GB"])("formats NGN with the naira symbol in %s", (locale) => {
+    expect(formatMoney(125000050n, "NGN", locale)).toBe("₦1,250,000.50");
   });
 
   it("formats JPY with 0 decimals", () => {

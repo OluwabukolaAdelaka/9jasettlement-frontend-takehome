@@ -54,6 +54,8 @@ function currencyFormatter(currency: Currency, locale: string | undefined): Intl
     formatter = new Intl.NumberFormat(locale, {
       style: "currency",
       currency,
+      //Without this, en-US/en-GB show "NGN 1,250.00" instead of "₦1,250.00".
+      currencyDisplay: "narrowSymbol",
       minimumFractionDigits: digits,
       maximumFractionDigits: digits,
     });

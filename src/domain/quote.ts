@@ -24,6 +24,18 @@ export function quoteMsRemaining(expiresAtIso: string, clockOffsetMs: number, no
   return Math.max(0, parseIsoMs(expiresAtIso) - (nowMs + clockOffsetMs));
 }
 
+export interface QuoteTiming {
+  expiresAt: string;
+  serverTime: string;
+  clockOffsetMs: number;
+}
+
+//Never more than the quote's lifetime: a clock reading from just before the quote arrived would otherwise show 31s.
+export function quoteTimeLeftMs(quote: QuoteTiming, nowMs: number): number {
+  const lifetimeMs = parseIsoMs(quote.expiresAt) - parseIsoMs(quote.serverTime);
+  return Math.min(lifetimeMs, quoteMsRemaining(quote.expiresAt, quote.clockOffsetMs, nowMs));
+}
+
 export function isQuoteExpired(expiresAtIso: string, clockOffsetMs: number, nowMs: number): boolean {
   return quoteMsRemaining(expiresAtIso, clockOffsetMs, nowMs) === 0;
 }

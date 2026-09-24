@@ -1,0 +1,19 @@
+import type { BalancesResponse, RatesResponse } from "./types";
+
+//Temporary sample payloads, copied from the brief and used until the mock API routes exist.
+
+export const SAMPLE_BALANCES: BalancesResponse = {
+  balances: [
+    { currency: "NGN", amount: "125000050" },
+    { currency: "USD", amount: "250075" },
+    { currency: "GBP", amount: "0" },
+    { currency: "EUR", amount: "48020" },
+    { currency: "JPY", amount: "150000" },
+  ],
+};
+
+export const SAMPLE_RATES_USD: RatesResponse = {
+  base: "USD",
+  rates: { NGN: "1532.45120000", GBP: "0.74210000", EUR: "0.85430000", JPY: "147.82000000" },
+  timestamp: "2026-09-24T10:15:05.000Z",
+};

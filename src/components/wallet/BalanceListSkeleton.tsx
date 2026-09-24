@@ -1,7 +1,7 @@
 import { CURRENCIES } from "@/domain/currency";
 import { Skeleton } from "@/components/ui/Skeleton";
 
-//Same shape as BalanceList, so nothing jumps when the real rows arrive.
+
 export function BalanceListSkeleton() {
   return (
     <div role="status">

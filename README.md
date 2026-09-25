@@ -164,4 +164,4 @@ Limits of this approach: the server keeps the last 10 conversions to stay under 
 I used Claude Code (Anthropic) as a pair programmer for planning, scaffolding, writing code and tests, reviewing edge cases, and drafting this README. I directed the scope and order of work, reviewed and edited every change, committed each step myself, and tested the app in the browser (including 375px).
 
 ## Time spent
-About 6 hours in total.
+About 7 hours in total, over two sessions (evening of 24 Sep and morning of 25 Sep).

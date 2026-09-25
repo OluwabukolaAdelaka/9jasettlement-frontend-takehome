@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Receipt } from "@/components/receipt/Receipt";
+import { ChevronDownIcon } from "@/components/ui/icons";
 import { Money } from "@/components/ui/Money";
 import { formatRate } from "@/domain/rates";
 import type { ConversionRecord } from "@/lib/api/mappers";
@@ -23,34 +24,36 @@ export function HistoryList({ records }: { records: ConversionRecord[] }) {
               aria-expanded={open}
               aria-controls={receiptId}
               onClick={() => setOpenId(open ? null : record.id)}
-              className="flex w-full flex-col gap-1 px-3 py-3 text-left hover:bg-canvas sm:px-4"
+              className="flex w-full items-center gap-3 px-3 py-3 text-left hover:bg-canvas sm:px-4"
             >
-              <span className="flex w-full items-center justify-between gap-2">
-                <span className="font-medium">
-                  {record.sell} → {record.buy}
+              <span className="flex min-w-0 flex-1 flex-col gap-1">
+                <span className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
+                  <span className="text-sm font-medium">
+                    {record.sell} → {record.buy}
+                  </span>
+                  <time dateTime={record.createdAt} className="text-xs text-ink-muted">
+                    {formatDateTime(record.createdAt)}
+                  </time>
                 </span>
-                <time dateTime={record.createdAt} className="text-xs text-ink-muted">
-                  {formatDateTime(record.createdAt)}
-                </time>
-              </span>
-              <span className="flex w-full flex-wrap items-baseline justify-between gap-x-3 text-sm">
-                <span>
-                  <span className="text-ink-muted">Sent </span>
-                  <Money minor={record.sellAmount} currency={record.sell} />
+                <span className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
+                  <span>
+                    <span className="text-ink-muted">Sent </span>
+                    <Money minor={record.sellAmount} currency={record.sell} />
+                  </span>
+                  <span>
+                    <span className="text-ink-muted">Received </span>
+                    <Money minor={record.buyAmount} currency={record.buy} className="font-semibold" />
+                  </span>
                 </span>
-                <span>
-                  <span className="text-ink-muted">Received </span>
-                  <Money minor={record.buyAmount} currency={record.buy} className="font-semibold" />
-                </span>
-              </span>
-              <span className="flex w-full items-center justify-between gap-2 text-xs text-ink-muted">
-                <span className="tabular-nums">
+                <span className="text-xs text-ink-muted tabular-nums">
                   Rate 1 {record.sell} = {formatRate(record.rate)} {record.buy}
                 </span>
-                <span aria-hidden="true" className={cx("transition-transform", open && "rotate-180")}>
-                  ▾
-                </span>
               </span>
+              <ChevronDownIcon
+                width={18}
+                height={18}
+                className={cx("shrink-0 text-ink-muted transition-transform", open && "rotate-180")}
+              />
             </button>
 
             {open && (

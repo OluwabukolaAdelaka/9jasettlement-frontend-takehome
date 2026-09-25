@@ -18,7 +18,7 @@ export function Card({ id, title, description, actions, className, children }: C
     <section
       id={id}
       aria-labelledby={headingId}
-      className={cx("rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-6", className)}
+      className={cx("scroll-mt-4 rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-6", className)}
     >
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">

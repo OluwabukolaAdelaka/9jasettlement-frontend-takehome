@@ -38,6 +38,14 @@ export function ArrowDownIcon(props: IconProps) {
   );
 }
 
+export function ChevronDownIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="m5.5 8 4.5 4.5L14.5 8" />
+    </Icon>
+  );
+}
+
 export function MinusIcon(props: IconProps) {
   return (
     <Icon {...props}>

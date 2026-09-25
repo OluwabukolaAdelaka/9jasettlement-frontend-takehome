@@ -9,7 +9,7 @@ export function RateListSkeleton() {
         {Array.from({ length: 4 }, (_, index) => (
           <li key={index} className="flex items-center justify-between gap-3 px-3 py-3 sm:px-4">
             <div className="flex items-center gap-3">
-              <Skeleton className="h-9 w-11 rounded-lg" />
+              <Skeleton className="hidden h-9 w-11 rounded-lg sm:block" />
               <div className="flex flex-col gap-1.5">
                 <Skeleton className="h-3.5 w-28" />
                 <Skeleton className="h-3 w-16" />

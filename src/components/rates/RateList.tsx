@@ -21,13 +21,13 @@ export function RateList({ base, board }: RateListProps) {
             <div className="flex min-w-0 items-center gap-3">
               <span
                 aria-hidden="true"
-                className="flex h-9 w-11 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-xs font-semibold text-brand"
+                className="hidden h-9 w-11 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-xs font-semibold text-brand sm:flex"
               >
                 {currency}
               </span>
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">{CURRENCY_NAMES[currency]}</p>
-                <p className="text-xs text-ink-muted">
+                <p className="whitespace-nowrap text-xs text-ink-muted">
                   {base} → {currency}
                 </p>
               </div>

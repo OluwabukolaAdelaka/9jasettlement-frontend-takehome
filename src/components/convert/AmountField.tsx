@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useEffect, useId, useRef } from "react";
 import { Money } from "@/components/ui/Money";
 import type { AmountSide } from "@/domain/convertForm";
 import { type Currency, MINOR_DIGITS } from "@/domain/currency";
@@ -15,6 +15,7 @@ interface AmountFieldProps {
   error: string | null;
   sellCurrency: Currency;
   available: bigint | undefined;
+  focusOnMount?: boolean;
 }
 
 const SIDES: { value: AmountSide; label: string }[] = [
@@ -31,12 +32,18 @@ export function AmountField({
   error,
   sellCurrency,
   available,
+  focusOnMount = false,
 }: AmountFieldProps) {
   const inputId = useId();
   const errorId = useId();
   const helpId = useId();
   const sideName = useId();
   const label = side === "sell" ? "You send" : "You receive";
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (focusOnMount) inputRef.current?.focus();
+  }, [focusOnMount]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -68,6 +75,7 @@ export function AmountField({
         <div className="relative">
           <input
             id={inputId}
+            ref={inputRef}
             type="text"
             inputMode={MINOR_DIGITS[currency] === 0 ? "numeric" : "decimal"}
             autoComplete="off"
@@ -89,11 +97,14 @@ export function AmountField({
             {currency}
           </span>
         </div>
-        {error && (
-          <p id={errorId} className="text-sm text-down">
-            {error}
-          </p>
-        )}
+        {/* Always mounted, so screen readers announce an error when it appears, not only when the field is revisited. */}
+        <div aria-live="polite">
+          {error && (
+            <p id={errorId} className="text-sm text-down">
+              {error}
+            </p>
+          )}
+        </div>
         <p id={helpId} className="text-xs text-ink-muted">
           Available:{" "}
           {available === undefined ? "…" : <Money minor={available} currency={sellCurrency} className="font-medium" />}

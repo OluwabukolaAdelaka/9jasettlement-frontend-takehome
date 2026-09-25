@@ -85,6 +85,29 @@ describe("ConvertCard", () => {
     expect(server.balances.NGN).toBe(125000050n + 14925000n);
   });
 
+  it("can be completed with the keyboard alone, and focus follows the flow", async () => {
+    installFetch();
+    const user = renderCard();
+
+    await user.click(screen.getByLabelText("You send (USD)"));
+    await user.keyboard("100");
+    await screen.findByText("You'd receive about");
+    await user.keyboard("{Enter}");
+
+    expect(await screen.findByRole("heading", { name: "Locked quote" })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole("button", { name: "Confirm conversion" })).toHaveFocus();
+    await user.keyboard("{Enter}");
+
+    expect(await screen.findByRole("heading", { name: "Conversion complete" })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole("button", { name: "Make another conversion" })).toHaveFocus();
+    await user.keyboard("{Enter}");
+
+    expect(screen.getByLabelText("You send (USD)")).toHaveFocus();
+    expect(server.conversions).toHaveLength(1);
+  });
+
   it("cannot be confirmed twice by double-clicking or pressing Enter repeatedly", async () => {
     const { conversionPosts } = installFetch({ conversionDelayMs: 100 });
     const user = await getQuoteFor100Usd();

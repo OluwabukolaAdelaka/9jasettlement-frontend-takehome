@@ -26,7 +26,7 @@ export function ConversionComplete({ receipt, onNewConversion }: ConversionCompl
           <CheckIcon width={18} height={18} />
         </span>
         <div>
-          <h3 id="receipt-heading" ref={headingRef} tabIndex={-1} className="font-semibold">
+          <h3 id="receipt-heading" ref={headingRef} tabIndex={-1} className="font-semibold focus:outline-none">
             Conversion complete
           </h3>
           <p className="text-sm">Your balances have been updated.</p>

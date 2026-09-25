@@ -44,11 +44,13 @@ export function CurrencyPair({ sell, buy, onSellChange, onBuyChange, onSwap, err
           describedBy={invalid ? errorId : undefined}
         />
       </div>
-      {error && (
-        <p id={errorId} className="mt-1.5 text-sm text-down">
-          {error}
-        </p>
-      )}
+      <div aria-live="polite">
+        {error && (
+          <p id={errorId} className="mt-1.5 text-sm text-down">
+            {error}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

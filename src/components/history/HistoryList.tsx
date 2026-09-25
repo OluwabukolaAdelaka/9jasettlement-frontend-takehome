@@ -56,12 +56,11 @@ export function HistoryList({ records }: { records: ConversionRecord[] }) {
               />
             </button>
 
-            {open && (
-              <div id={receiptId} className="border-t border-line bg-canvas px-3 py-3 sm:px-4">
-                <h3 className="mb-2 text-sm font-semibold">Receipt</h3>
-                <Receipt record={record} />
-              </div>
-            )}
+            {/* Always rendered (hidden when closed) so aria-controls always points at a real element. */}
+            <div id={receiptId} hidden={!open} className="border-t border-line bg-canvas px-3 py-3 sm:px-4">
+              <h3 className="mb-2 text-sm font-semibold">Receipt</h3>
+              <Receipt record={record} />
+            </div>
           </li>
         );
       })}

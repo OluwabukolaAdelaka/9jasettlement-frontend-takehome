@@ -1,4 +1,6 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useEffect, useRef, type ReactNode } from "react";
 import { AlertIcon } from "@/components/ui/icons";
 import { Money } from "@/components/ui/Money";
 import { StatusPill } from "@/components/ui/StatusPill";
@@ -21,6 +23,13 @@ export function QuotePanel({ quote, comparison, msRemaining, actions, children }
   const { sell, buy } = quote.input;
   const expired = msRemaining === 0;
   const totalMs = Date.parse(quote.expiresAt) - Date.parse(quote.serverTime);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  //The "Get quote" / "Refresh" button that had focus is gone once a new quote arrives, so focus moves here.
+  //Focusing the heading, not Confirm, means a stray extra Enter can't confirm by accident.
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, [quote.id]);
 
   return (
     <section
@@ -29,7 +38,7 @@ export function QuotePanel({ quote, comparison, msRemaining, actions, children }
     >
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
-          <h3 id="quote-heading" className="font-semibold">
+          <h3 id="quote-heading" ref={headingRef} tabIndex={-1} className="font-semibold focus:outline-none">
             {expired ? "Quote expired" : "Locked quote"}
           </h3>
           <StatusPill tone={expired ? "danger" : "brand"} className="mt-1">

@@ -31,6 +31,8 @@ export function ConvertCard() {
   const balances = useBalances();
   const quote = useQuote();
   const confirm = useConfirmConversion();
+  //After a receipt the form remounts; put the keyboard user straight back in the amount field.
+  const [returningFromReceipt, setReturningFromReceipt] = useState(false);
 
   const available = balances.data?.find((balance) => balance.currency === values.sell)?.minor;
   const shortfall =
@@ -93,6 +95,7 @@ export function ConvertCard() {
     confirm.reset();
     quote.reset();
     setValues((current) => ({ ...current, amountText: "" }));
+    setReturningFromReceipt(true);
   };
 
   if (confirm.state.phase === "done") {
@@ -108,24 +111,25 @@ export function ConvertCard() {
       <form className="flex flex-col gap-5" onSubmit={submit} noValidate>
         {/* Inputs are locked while confirming, so the quote being confirmed can't change underneath it. */}
         <fieldset disabled={confirm.state.phase === "submitting"} className="flex min-w-0 flex-col gap-5">
-        <CurrencyPair
-          sell={values.sell}
-          buy={values.buy}
-          onSellChange={(sell) => update({ sell })}
-          onBuyChange={(buy) => update({ buy })}
-          onSwap={swap}
-          error={pairError}
-        />
-        <AmountField
-          side={values.side}
-          currency={amountCurrency(values)}
-          amountText={values.amountText}
-          onSideChange={changeSide}
-          onAmountChange={(amountText) => update({ amountText })}
-          error={amountError}
-          sellCurrency={values.sell}
-          available={available}
-        />
+          <CurrencyPair
+            sell={values.sell}
+            buy={values.buy}
+            onSellChange={(sell) => update({ sell })}
+            onBuyChange={(buy) => update({ buy })}
+            onSwap={swap}
+            error={pairError}
+          />
+          <AmountField
+            side={values.side}
+            currency={amountCurrency(values)}
+            amountText={values.amountText}
+            onSideChange={changeSide}
+            onAmountChange={(amountText) => update({ amountText })}
+            error={amountError}
+            sellCurrency={values.sell}
+            available={available}
+            focusOnMount={returningFromReceipt}
+          />
         </fieldset>
 
         {!showingQuote && (

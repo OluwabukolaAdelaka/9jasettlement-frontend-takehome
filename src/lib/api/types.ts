@@ -67,7 +67,8 @@ export interface ConversionResponse {
 //Conversions are returned newest first.
 export interface ConversionsResponse {
   conversions: ConversionResponse[];
-  serverInstance: string;
+  //The visitor's wallet, or null when they don't have one yet (no cookie).
+  sessionId: string | null;
 }
 
 export interface DebugStateResponse {

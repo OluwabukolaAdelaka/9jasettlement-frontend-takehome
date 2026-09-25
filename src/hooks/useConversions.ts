@@ -10,11 +10,11 @@ import { loadLocalHistory, saveLocalHistory } from "@/lib/historyStorage";
 async function fetchHistory(): Promise<ConversionResponse[]> {
   const stored = loadLocalHistory();
   try {
-    const { conversions, serverInstance } = await getConversions();
-    //A different instance means the server restarted with fresh balances: drop the old copy so history matches them.
-    const local = stored.serverInstance === serverInstance ? stored.conversions : [];
+    const { conversions, sessionId } = await getConversions();
+    //A different (or no) wallet means fresh balances: drop the old copy so history matches them.
+    const local = stored.sessionId === sessionId ? stored.conversions : [];
     const merged = mergeHistory(conversions, local);
-    saveLocalHistory({ serverInstance, conversions: merged });
+    saveLocalHistory({ sessionId, conversions: merged });
     return merged;
   } catch (error) {
     //If the server is unreachable, the browser copy is the best history we have.

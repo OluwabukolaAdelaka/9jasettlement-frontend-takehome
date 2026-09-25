@@ -29,17 +29,17 @@ describe("mergeHistory", () => {
     expect(mergeHistory(server, local).map((c) => c.id)).toEqual(["a", "b"]);
   });
 
-  it("keeps browser history when the server has restarted and lost it", () => {
+  it("keeps browser history the server no longer lists", () => {
     const local = [conversion("a", "2026-09-24T10:00:00.000Z")];
     expect(mergeHistory([], local)).toEqual(local);
   });
 });
 
 describe("parseStoredHistory", () => {
-  const empty = { serverInstance: null, conversions: [] };
+  const empty = { sessionId: null, conversions: [] };
 
-  it("reads what was saved, with the server instance it came from", () => {
-    const saved = { serverInstance: "srv-1", conversions: [conversion("a", "2026-09-24T10:00:00.000Z")] };
+  it("reads what was saved, with the wallet it belongs to", () => {
+    const saved = { sessionId: "session-1", conversions: [conversion("a", "2026-09-24T10:00:00.000Z")] };
     expect(parseStoredHistory(JSON.stringify(saved))).toEqual(saved);
   });
 
@@ -47,7 +47,7 @@ describe("parseStoredHistory", () => {
     ["nothing", null],
     ["broken JSON", "{not json"],
     ["the old v1 format (a bare array)", JSON.stringify([conversion("a", "2026-09-24T10:00:00.000Z")])],
-    ["an object without conversions", '{"serverInstance":"srv-1"}'],
+    ["an object without conversions", '{"sessionId":"session-1"}'],
   ])("returns empty history for %s", (_, raw) => {
     expect(parseStoredHistory(raw)).toEqual(empty);
   });
@@ -56,7 +56,7 @@ describe("parseStoredHistory", () => {
     const valid = conversion("a", "2026-09-24T10:00:00.000Z");
     const floatAmount = { ...conversion("b", "2026-09-24T10:00:00.000Z"), sellAmount: "100.5" };
     const badCurrency = { ...conversion("c", "2026-09-24T10:00:00.000Z"), buyCurrency: "BTC" };
-    const raw = JSON.stringify({ serverInstance: "srv-1", conversions: [valid, floatAmount, badCurrency, null] });
-    expect(parseStoredHistory(raw)).toEqual({ serverInstance: "srv-1", conversions: [valid] });
+    const raw = JSON.stringify({ sessionId: "session-1", conversions: [valid, floatAmount, badCurrency, null] });
+    expect(parseStoredHistory(raw)).toEqual({ sessionId: "session-1", conversions: [valid] });
   });
 });

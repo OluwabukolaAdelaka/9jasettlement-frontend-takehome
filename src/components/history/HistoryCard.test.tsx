@@ -3,7 +3,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ConvertCard } from "@/components/convert/ConvertCard";
-import { installFetch, resetServer } from "@/test/apiHarness";
+import { installFetch, resetServer, switchServerInstance } from "@/test/apiHarness";
 import { HistoryCard } from "./HistoryCard";
 
 vi.mock("@/server/simulate", () => ({
@@ -34,7 +34,7 @@ function renderApp() {
   );
 }
 
-it("shows a completed conversion, opens its receipt, survives a refresh, and resets with the server", async () => {
+it("shows a completed conversion, opens its receipt, survives refreshes and server switches, and resets with a new wallet", async () => {
   const user = userEvent.setup();
   const app = renderApp();
   expect(await screen.findByText("No conversions yet")).toBeInTheDocument();
@@ -63,8 +63,15 @@ it("shows a completed conversion, opens its receipt, survives a refresh, and res
   const restored = within(screen.getByRole("region", { name: "History" }));
   expect(await restored.findByRole("button", { name: /USD → NGN/ })).toHaveTextContent("Received ₦149,250.00");
 
-  //Serverless restart: balances are back to the start, so history must not show conversions they no longer reflect.
+  //Another server instance (or a restart): the wallet travels in the cookie, so nothing is lost.
   refreshed.unmount();
+  switchServerInstance();
+  const otherInstance = renderApp();
+  const stillThere = within(screen.getByRole("region", { name: "History" }));
+  expect(await stillThere.findByRole("button", { name: /USD → NGN/ })).toHaveTextContent("Received ₦149,250.00");
+
+  //A brand-new wallet (cookie gone): starting balances, so history must not show conversions they don't reflect.
+  otherInstance.unmount();
   resetServer();
   renderApp();
   expect(await screen.findByText("No conversions yet")).toBeInTheDocument();

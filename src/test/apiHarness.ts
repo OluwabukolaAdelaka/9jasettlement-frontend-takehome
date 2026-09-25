@@ -2,25 +2,51 @@ import Big from "big.js";
 import { vi } from "vitest";
 import { GET as getBalances } from "@/app/api/balances/route";
 import { GET as getConversions, POST as postConversion } from "@/app/api/conversions/route";
+import { GET as getDebug, POST as postDebug } from "@/app/api/debug/route";
 import { POST as postQuote } from "@/app/api/quotes/route";
 import { GET as getRates } from "@/app/api/rates/route";
-import { createInitialState, getState, type ServerState } from "@/server/state";
+import { setUsdRates } from "@/server/market";
+import { decodeSession, encodeSession, SESSION_COOKIE } from "@/server/session";
+import { createSession, type ServerState } from "@/server/state";
 
 type Handler = (request: Request) => Promise<Response> | Response;
 
 const ROUTES: Record<string, Partial<Record<string, Handler>>> = {
-  "/api/balances": { GET: () => getBalances() },
+  "/api/balances": { GET: getBalances },
   "/api/rates": { GET: getRates },
   "/api/quotes": { POST: postQuote },
-  "/api/conversions": { GET: () => getConversions(), POST: postConversion },
+  "/api/conversions": { GET: getConversions, POST: postConversion },
+  "/api/debug": { GET: getDebug, POST: postDebug },
 };
 
+//The test "browser": holds the session cookie between requests, like a real one.
+let cookieJar: string | null = null;
+
 //Round rates so expected amounts are easy to check: 1 USD = ₦1500 = €0.8 = £0.75 = ¥150.
-export function resetServer(): ServerState {
-  const state = createInitialState();
-  state.usdRates = { NGN: new Big(1500), USD: new Big(1), GBP: new Big("0.75"), EUR: new Big("0.8"), JPY: new Big(150) };
-  (globalThis as { __swaprState?: ServerState }).__swaprState = state;
-  return getState();
+export function roundRates() {
+  return { NGN: new Big(1500), USD: new Big(1), GBP: new Big("0.75"), EUR: new Big("0.8"), JPY: new Big(150) };
+}
+
+//A new visitor on a fresh server: no cookie, and market rates back to the round numbers.
+export function resetServer(): void {
+  cookieJar = null;
+  setUsdRates(roundRates());
+}
+
+//Simulates Vercel sending the next request to another instance: that instance's memory (market rates) is its own.
+export function switchServerInstance(): void {
+  setUsdRates(roundRates());
+}
+
+//The visitor's wallet as the server sees it (decoded from the cookie jar).
+export function serverWallet(): Omit<ServerState, "usdRates"> {
+  return decodeSession(cookieJar ?? undefined) ?? createSession();
+}
+
+export function updateServerWallet(change: (wallet: Omit<ServerState, "usdRates">) => void): void {
+  const wallet = serverWallet();
+  change(wallet);
+  cookieJar = encodeSession(wallet, Date.now());
 }
 
 //Routes fetch() into the real Next.js handlers so tests exercise the UI and mock server together.
@@ -38,7 +64,15 @@ export function installFetch({ conversionDelayMs = 0 } = {}) {
       conversionPosts.push(JSON.parse(String(init?.body)));
       if (conversionDelayMs) await new Promise((resolve) => setTimeout(resolve, conversionDelayMs));
     }
-    return handler(new Request(url, init));
+
+    const headers = new Headers(init?.headers);
+    if (cookieJar) headers.set("cookie", `${SESSION_COOKIE}=${cookieJar}`);
+    const response = await handler(new Request(url, { ...init, headers }));
+
+    const setCookie = response.headers.get("set-cookie");
+    const value = setCookie?.match(new RegExp(`${SESSION_COOKIE}=([^;]+)`))?.[1];
+    if (value) cookieJar = value;
+    return response;
   });
 
   vi.stubGlobal("fetch", fetchMock);

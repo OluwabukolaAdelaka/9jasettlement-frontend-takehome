@@ -3,8 +3,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { controllableClock, installFetch, resetServer } from "@/test/apiHarness";
-import type { ServerState } from "@/server/state";
+import { getUsdRates } from "@/server/market";
+import {
+  controllableClock,
+  installFetch,
+  resetServer,
+  serverWallet,
+  switchServerInstance,
+  updateServerWallet,
+} from "@/test/apiHarness";
 import { ConvertCard } from "./ConvertCard";
 
 //No random latency, 503s, or rate drift: tests must be deterministic.
@@ -17,9 +24,8 @@ vi.mock("@/server/rates", async (importOriginal) => ({
   driftRates: <T,>(rates: T) => rates,
 }));
 
-let server: ServerState;
 beforeEach(() => {
-  server = resetServer();
+  resetServer();
 });
 afterEach(() => {
   vi.restoreAllMocks();
@@ -79,10 +85,10 @@ describe("ConvertCard", () => {
     expect(receipt.getByText("$0.50")).toBeInTheDocument();
     expect(receipt.getByText("$100.50")).toBeInTheDocument();
     expect(receipt.getByText("1 USD = 1,492.50 NGN")).toBeInTheDocument();
-    expect(receipt.getByText(server.conversions[0].id)).toBeInTheDocument();
+    expect(receipt.getByText(serverWallet().conversions[0].id)).toBeInTheDocument();
 
-    expect(server.balances.USD).toBe(250075n - 10050n);
-    expect(server.balances.NGN).toBe(125000050n + 14925000n);
+    expect(serverWallet().balances.USD).toBe(250075n - 10050n);
+    expect(serverWallet().balances.NGN).toBe(125000050n + 14925000n);
   });
 
   it("can be completed with the keyboard alone, and focus follows the flow", async () => {
@@ -105,7 +111,7 @@ describe("ConvertCard", () => {
     await user.keyboard("{Enter}");
 
     expect(screen.getByLabelText("You send (USD)")).toHaveFocus();
-    expect(server.conversions).toHaveLength(1);
+    expect(serverWallet().conversions).toHaveLength(1);
   });
 
   it("cannot be confirmed twice by double-clicking or pressing Enter repeatedly", async () => {
@@ -119,8 +125,8 @@ describe("ConvertCard", () => {
     await screen.findByRole("heading", { name: "Conversion complete" });
 
     expect(conversionPosts).toHaveLength(1);
-    expect(server.conversions).toHaveLength(1);
-    expect(server.balances.USD).toBe(250075n - 10050n);
+    expect(serverWallet().conversions).toHaveLength(1);
+    expect(serverWallet().balances.USD).toBe(250075n - 10050n);
   });
 
   it("keeps the countdown accurate after the tab is backgrounded, then blocks confirm on expiry", async () => {
@@ -150,7 +156,7 @@ describe("ConvertCard", () => {
 
     clock.jump(31_000);
     returnToTab();
-    server.usdRates.NGN = new Big(1400);
+    getUsdRates().NGN = new Big(1400);
     await user.click(screen.getByRole("button", { name: /Refresh quote/ }));
 
     //1400 × 0.995 = 1393 → ₦139,300, which is ₦9,950 less than before.
@@ -161,22 +167,37 @@ describe("ConvertCard", () => {
 
   it("tells the user when the server rejects the quote as expired, and balances do not change", async () => {
     installFetch();
-    server.debug.forceNextConversionExpired = true;
+    updateServerWallet((wallet) => {
+      wallet.debug.forceNextConversionExpired = true;
+    });
     const user = await getQuoteFor100Usd();
-    const before = { ...server.balances };
+    const before = serverWallet().balances;
 
     await user.click(screen.getByRole("button", { name: "Confirm conversion" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "This quote expired before we could confirm it. Nothing was converted and your balances haven't changed.",
     );
-    expect(server.balances).toEqual(before);
+    expect(serverWallet().balances).toEqual(before);
     expect(screen.queryByRole("button", { name: "Confirm conversion" })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Get a fresh quote" }));
     await user.click(await screen.findByRole("button", { name: "Confirm conversion" }));
     await screen.findByRole("heading", { name: "Conversion complete" });
-    expect(server.balances.USD).toBe(before.USD - 10050n);
+    expect(serverWallet().balances.USD).toBe(before.USD - 10050n);
+  });
+
+  it("confirms a quote even when another server instance handles the confirm", async () => {
+    installFetch();
+    const user = await getQuoteFor100Usd();
+
+    //Vercel routes the next request to a different instance with its own memory.
+    switchServerInstance();
+    await user.click(screen.getByRole("button", { name: "Confirm conversion" }));
+
+    await screen.findByRole("heading", { name: "Conversion complete" });
+    expect(serverWallet().balances.USD).toBe(250075n - 10050n);
+    expect(serverWallet().conversions).toHaveLength(1);
   });
 
   it("invalidates the quote when the amount changes", async () => {

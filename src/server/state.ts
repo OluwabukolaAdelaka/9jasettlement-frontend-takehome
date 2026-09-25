@@ -2,7 +2,7 @@ import Big from "big.js";
 import type { Currency } from "@/domain/currency";
 import type { ConversionResponse } from "@/lib/api/types";
 
-//In-memory state for the mock API; it resets when the server restarts.
+//One visitor's mock wallet (carried in a signed cookie, see session.ts) plus the shared market rates.
 
 export interface DebugFlags {
   ratesOutage: boolean;
@@ -23,8 +23,8 @@ export interface StoredQuote {
 }
 
 export interface ServerState {
-  //New on every server start, so the browser can tell its saved history belongs to an earlier, reset server.
-  instanceId: string;
+  //Identifies one visitor's wallet, so the browser can tell when its saved history belongs to a wallet that no longer exists.
+  sessionId: string;
   balances: Record<Currency, bigint>;
   usdRates: Record<Currency, Big>;
   quotes: Map<string, StoredQuote>;
@@ -63,11 +63,15 @@ export function initialBalances(): Record<Currency, bigint> {
   return mapValues(INITIAL_BALANCES, (amount) => BigInt(amount));
 }
 
-export function createInitialState(): ServerState {
+export function initialUsdRates(): Record<Currency, Big> {
+  return mapValues(INITIAL_USD_RATES, (rate) => new Big(rate));
+}
+
+//A brand-new visitor's wallet.
+export function createSession(): Omit<ServerState, "usdRates"> {
   return {
-    instanceId: crypto.randomUUID(),
+    sessionId: crypto.randomUUID(),
     balances: initialBalances(),
-    usdRates: mapValues(INITIAL_USD_RATES, (rate) => new Big(rate)),
     quotes: new Map(),
     conversions: [],
     idempotency: new Map(),
@@ -75,10 +79,6 @@ export function createInitialState(): ServerState {
   };
 }
 
-//Keeps state across hot reloads in development and shares it across routes.
-const globalForState = globalThis as typeof globalThis & { __swaprState?: ServerState };
-
-export function getState(): ServerState {
-  globalForState.__swaprState ??= createInitialState();
-  return globalForState.__swaprState;
+export function createInitialState(): ServerState {
+  return { ...createSession(), usdRates: initialUsdRates() };
 }

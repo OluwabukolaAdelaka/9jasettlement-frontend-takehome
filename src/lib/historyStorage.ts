@@ -1,17 +1,17 @@
 import { isCurrency } from "@/domain/currency";
 import type { ConversionResponse } from "./api/types";
 
-//Browser copy of completed conversions, tagged with the server instance they came from.
-//It survives page refreshes; if the server restarts (fresh balances), the copy is dropped so history and balances agree.
+//Browser copy of completed conversions, tagged with the wallet (session) they belong to.
+//It survives page refreshes; if the wallet is new or was replaced, the copy is dropped so history and balances agree.
 const STORAGE_KEY = "swapr.history.v2";
 const LEGACY_KEY = "swapr.history.v1";
 
 export interface StoredHistory {
-  serverInstance: string | null;
+  sessionId: string | null;
   conversions: ConversionResponse[];
 }
 
-const EMPTY: StoredHistory = { serverInstance: null, conversions: [] };
+const EMPTY: StoredHistory = { sessionId: null, conversions: [] };
 const INTEGER = /^\d+$/;
 
 function isConversion(value: unknown): value is ConversionResponse {
@@ -46,9 +46,9 @@ export function parseStoredHistory(raw: string | null): StoredHistory {
     const parsed: unknown = JSON.parse(raw);
     if (typeof parsed !== "object" || parsed === null || !("conversions" in parsed)) return EMPTY;
     const { conversions } = parsed;
-    const serverInstance = "serverInstance" in parsed ? parsed.serverInstance : null;
+    const sessionId = "sessionId" in parsed ? parsed.sessionId : null;
     return {
-      serverInstance: typeof serverInstance === "string" ? serverInstance : null,
+      sessionId: typeof sessionId === "string" ? sessionId : null,
       conversions: Array.isArray(conversions) ? conversions.filter(isConversion) : [],
     };
   } catch {

@@ -4,6 +4,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { type ApiError, createConversion, toApiError } from "@/lib/api/client";
 import { type ConversionRecord, toConversionRecord } from "@/lib/api/mappers";
+import { mergeHistory } from "@/lib/history";
+import { loadLocalHistory, saveLocalHistory } from "@/lib/historyStorage";
 import type { LockedQuote } from "./useQuote";
 
 export type ConfirmState =
@@ -37,6 +39,7 @@ export function useConfirmConversion() {
     setState({ phase: "submitting", quoteId: quote.id });
     try {
       const response = await createConversion({ quoteId: quote.id, idempotencyKey });
+      saveLocalHistory(mergeHistory([response], loadLocalHistory()));
       setState({ phase: "done", receipt: toConversionRecord(response) });
     } catch (error) {
       setState({ phase: "failed", quoteId: quote.id, error: toApiError(error) });

@@ -1,8 +1,7 @@
 import { AppHeader } from "@/components/layout/AppHeader";
-import { SectionPlaceholder } from "@/components/layout/SectionPlaceholder";
 import { ConvertCard } from "@/components/convert/ConvertCard";
+import { HistoryCard } from "@/components/history/HistoryCard";
 import { RatesCard } from "@/components/rates/RatesCard";
-import { Card } from "@/components/ui/Card";
 import { WalletCard } from "@/components/wallet/WalletCard";
 
 export default function Home() {
@@ -21,9 +20,7 @@ export default function Home() {
         </div>
         <div className="flex min-w-0 flex-col gap-4 sm:gap-6">
           <RatesCard />
-          <Card id="history" title="History" description="Completed conversions, newest first.">
-            <SectionPlaceholder rows={3} />
-          </Card>
+          <HistoryCard />
         </div>
       </main>
     </>

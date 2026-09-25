@@ -28,7 +28,7 @@ A single Next.js (App Router) app. The UI only talks to the mock API over HTTP (
 ```
 src/
   domain/       Pure logic: money, pricing, quote timing, rates, portfolio. No React, no fetch. Fully unit-tested.
-  server/       The mock backend: in-memory state, pricing rules, quotes, conversions, debug switches.
+  server/       The mock backend: per-visitor state in a signed cookie, shared market rates, pricing rules, quotes, conversions, debug switches.
   app/api/      Thin route handlers: parse the request -> call server/ -> respond.
   lib/api/      Typed fetch client, API types, and mappers from API strings to bigint.
   hooks/        Data and state hooks (TanStack Query): balances, rates, quote, confirm, history.
@@ -110,13 +110,18 @@ On the server, a quote can also be used only once, even with a different key, an
 
 Every endpoint adds 200–1,500 ms of latency, except `/api/debug`. Errors use `{ "error": { "code", "message" } }`. Other codes: `INVALID_REQUEST`, `SAME_CURRENCY`, `AMOUNT_TOO_SMALL`, `QUOTE_NOT_FOUND`, `QUOTE_ALREADY_USED`, `IDEMPOTENCY_KEY_REUSED`, `INVALID_BASE`, `RATES_UNAVAILABLE`.
 
-**In-memory state:** there's no database. State lives in the server process (on `globalThis`), so it resets when Vercel restarts the function, and separate function instances don't share it. Each completed conversion is also saved in `localStorage` and merged with the server's list (one entry per ID, newest first), so history survives a page refresh. The saved copy is tagged with a random server instance ID. If the server has restarted (new ID, starting balances), the browser drops its copy, so history never shows conversions the balances no longer reflect.
+**State: a signed cookie per visitor.** There's no database. Vercel can run several function instances at once, each with its own memory, so keeping the wallet in server memory made balances jump between requests and let a quote made on one instance fail to confirm on another. Instead, each visitor's wallet (balances, recent quotes, the last 10 conversions with their idempotency keys, and debug switches) travels in an `HttpOnly` cookie signed with HMAC-SHA256 (`src/server/session.ts`):
+- Every instance reads the same cookie, so any instance gives the same answer, even straight after a restart.
+- Every visitor gets their own sandbox wallet, so reviewers testing at the same time don't see each other's conversions or trip each other's debug switches.
+- The browser carries the state but can't change it: an edited or corrupted cookie fails the signature check and starts a fresh wallet.
+- Only requests that change the wallet (quote, convert, debug switch) write the cookie, so a slow rates poll can never overwrite a newer conversion.
+- Market rates stay in each instance's memory. They're market data, not the wallet, and a quote locks its own rate in the cookie.
 
-Vercel can occasionally run more than one function instance at once. Each has its own memory, so balances may briefly differ between requests, and a quote created on one instance can't be confirmed on another (the UI shows the error and offers a fresh quote). I kept in-memory state as the brief allows; see Next steps for the fix.
+Limits of this approach: the server keeps the last 10 conversions to stay under the ~4 KB cookie size (the browser also keeps a copy in `localStorage`, tagged with the wallet's session ID, so history survives a refresh and is dropped only when the wallet is new); the signing key is a constant for the mock (`SESSION_SECRET` overrides it); and two requests sent at the same instant from one browser would both start from the same cookie. The UI's double-submit guards prevent that, and the final wallet is still debited once, but a real backend would use a database transaction.
 
 ## Testing
 
-`npm test` runs about 180 tests. They target the risky logic:
+`npm test` runs about 190 tests. They target the risky logic:
 - Money: parsing and formatting (JPY with 0 decimals, ₦ in every locale, very large values), fee rounding, spread, both conversion directions, and a never-under-deliver / never-overcharge property check.
 - Time: clock offset, countdown after a sleep, a wrong client clock, the expiry boundary, and the 31 s cap.
 - Server rules: fee and spread, insufficient funds including the fee, 410 past expiry, idempotency, single-use quotes, balances unchanged on every failure, and debug switches.
@@ -130,7 +135,8 @@ Vercel can occasionally run more than one function instance at once. Each has it
   - editing invalidates the quote
   - same-currency and over-balance conversions are blocked
   - the whole flow works with the keyboard only
-- History: a conversion shows up, its receipt opens, it survives a page refresh, and it resets together with balances when the server restarts.
+- Session state: the signed cookie round-trips, a tampered cookie is rejected, it stays under the size limit, and a quote made on one server instance confirms on another.
+- History: a conversion shows up, its receipt opens, it survives a page refresh and a switch to another server instance, and it resets only for a brand-new wallet.
 
 ## Accessibility and responsive layout
 - Semantic landmarks, one `h1`, a labelled `h2` section per card, and a skip link.
@@ -141,14 +147,14 @@ Vercel can occasionally run more than one function instance at once. Each has it
 - Works at 375px: long names shorten with "…", and the rates board hides its code badge on small screens.
 
 ## Trade-offs (what I chose not to do)
-- No database. In-memory state, as the brief allows. When Vercel restarts the function, balances and history reset together.
+- No database. Each visitor's wallet lives in a signed cookie, which keeps "no external services" and works across Vercel instances, at the cost of keeping only the last 10 conversions on the server side. Clearing cookies starts a fresh wallet.
 - No stretch goals (sparkline, SSE, locale switcher, dark mode, Playwright). The brief favours a polished core, and I spent the time on correctness and tests instead.
 - No end-to-end browser tests. The component tests cover the full flow against the real route handlers, but not a real browser.
 - Mock API responses aren't schema-validated in the client. They're treated as a trusted boundary (typed, but not checked at runtime). Stored history *is* validated, because `localStorage` can hold anything.
 - Polling, not streaming, for rates, as the brief specifies.
 
 ## Next steps (with another week)
-- Consistent state across Vercel instances: a shared store (Redis or Postgres) in production, or, to keep "no external services" for the mock, each visitor's state in a signed (HMAC) cookie so any instance gives the same answer and every reviewer gets their own wallet.
+- A real database with transactions in place of the signed-cookie wallet, so history isn't capped and simultaneous requests are serialised.
 - Runtime validation of API responses (for example zod), and generating the client types from one schema.
 - Playwright tests for quote expiry, the debug panel, and the 375px layout in real browsers.
 - A "Max" button that works out the largest amount the balance covers including the fee.

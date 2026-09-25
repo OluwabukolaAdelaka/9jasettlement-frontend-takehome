@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import { DebugPanelGate } from "@/components/debug/DebugPanel";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { ConvertCard } from "@/components/convert/ConvertCard";
 import { HistoryCard } from "@/components/history/HistoryCard";
@@ -23,6 +25,10 @@ export default function Home() {
           <HistoryCard />
         </div>
       </main>
+       {/* Reads the URL client-side inside Suspense, keeping the rest of the page prerendered. */}
+      <Suspense fallback={null}>
+        <DebugPanelGate />
+      </Suspense>
     </>
   );
 }

@@ -112,6 +112,8 @@ Every endpoint adds 200–1,500 ms of latency, except `/api/debug`. Errors use `
 
 **In-memory state:** there's no database. State lives in the server process (on `globalThis`), so it resets when Vercel restarts the function, and separate function instances don't share it. Each completed conversion is also saved in `localStorage` and merged with the server's list (one entry per ID, newest first), so history survives a page refresh. The saved copy is tagged with a random server instance ID. If the server has restarted (new ID, starting balances), the browser drops its copy, so history never shows conversions the balances no longer reflect.
 
+Vercel can occasionally run more than one function instance at once. Each has its own memory, so balances may briefly differ between requests, and a quote created on one instance can't be confirmed on another (the UI shows the error and offers a fresh quote). I kept in-memory state as the brief allows; see Next steps for the fix.
+
 ## Testing
 
 `npm test` runs about 180 tests. They target the risky logic:
@@ -146,7 +148,7 @@ Every endpoint adds 200–1,500 ms of latency, except `/api/debug`. Errors use `
 - Polling, not streaming, for rates, as the brief specifies.
 
 ## Next steps (with another week)
-- A shared store (Redis or Postgres) so balances and history survive restarts and all function instances agree.
+- Consistent state across Vercel instances: a shared store (Redis or Postgres) in production, or, to keep "no external services" for the mock, each visitor's state in a signed (HMAC) cookie so any instance gives the same answer and every reviewer gets their own wallet.
 - Runtime validation of API responses (for example zod), and generating the client types from one schema.
 - Playwright tests for quote expiry, the debug panel, and the 375px layout in real browsers.
 - A "Max" button that works out the largest amount the balance covers including the fee.

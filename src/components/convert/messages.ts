@@ -1,7 +1,6 @@
 import type { DraftError, Shortfall } from "@/domain/convertForm";
 import { formatMoney } from "@/domain/money";
 
-
 export function draftErrorMessage(error: DraftError): string | null {
   switch (error.kind) {
     case "same_currency":

@@ -6,7 +6,6 @@ import { getState } from "@/server/state";
 
 export const dynamic = "force-dynamic";
 
-//Returns mid-market rates and applies a small random drift to each rate.
 export async function GET(request: Request) {
   await simulateLatency();
 

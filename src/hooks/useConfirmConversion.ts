@@ -14,12 +14,10 @@ export type ConfirmState =
   | { phase: "done"; receipt: ConversionRecord }
   | { phase: "failed"; quoteId: string; error: ApiError };
 
-
- //Three layers stop a conversion running twice:
- //1. a ref checked synchronously, so a double-click or repeated Enter before re-render is ignored;
- //2. the button is disabled while submitting;
- //3. one idempotency key per quote, so even a retried request can only convert once on the server.
-
+//Three layers stop a conversion running twice:
+//1. a ref checked synchronously, so a double-click or repeated Enter before re-render is ignored;
+//2. the button is disabled while submitting;
+//3. one idempotency key per quote, so even a retried request can only convert once on the server.
 export function useConfirmConversion() {
   const queryClient = useQueryClient();
   const [state, setState] = useState<ConfirmState>({ phase: "idle" });

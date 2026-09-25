@@ -3,7 +3,7 @@ import { type Currency, MINOR_DIGITS } from "./currency";
 
 //Store money as BigInt in the smallest currency unit, like kobo or cents.
 //Convert it to a string only when sending it to the API.
-//NEver use JavaScript floating-point numbers for money.
+//Never use JavaScript floating-point numbers for money.
 
 const INTEGER_STRING = /^-?\d+$/;
 const DECIMAL_INPUT = /^\d+(\.\d*)?$|^\.\d+$/;
@@ -12,7 +12,6 @@ function minorScale(currency: Currency): Big {
   return new Big(10).pow(MINOR_DIGITS[currency]);
 }
 
-//Converts an API amount like "250075" into minor units. Throws if it's not a whole number.
 export function parseMinor(value: string): bigint {
   if (!INTEGER_STRING.test(value)) {
     throw new Error(`Invalid minor-unit amount: "${value}"`);
@@ -20,9 +19,6 @@ export function parseMinor(value: string): bigint {
   return BigInt(value);
 }
 
-//250075n USD → "2500.75"
-//150000n JPY → "150000"
-//Exact amounts, no rounding errors.
 export function minorToMajorString(minor: bigint, currency: Currency): string {
   return new Big(minor.toString()).div(minorScale(currency)).toFixed(MINOR_DIGITS[currency]);
 }
@@ -64,7 +60,7 @@ function currencyFormatter(currency: Currency, locale: string | undefined): Intl
   return formatter;
 }
 
-//Formats minor units for display without using floats, even for large balances.
+//Passed to Intl as a decimal string, so large balances never pass through a float.
 export function formatMoney(minor: bigint, currency: Currency, locale?: string): string {
   const major = minorToMajorString(minor, currency) as `${number}`;
   return currencyFormatter(currency, locale).format(major);

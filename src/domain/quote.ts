@@ -71,8 +71,8 @@ export type QuoteComparison =
   | { worse: false }
   | { worse: true; currency: Currency; difference: bigint };
 
-  //Compares a refreshed quote from the user's point of view.
-  //A fixed sell is worse if they receive less; a fixed buy is worse if they pay more.
+//Compares a refreshed quote from the user's point of view.
+//A fixed sell is worse if they receive less; a fixed buy is worse if they pay more.
 export function compareQuotes(
   previous: QuoteAmounts,
   next: QuoteAmounts,

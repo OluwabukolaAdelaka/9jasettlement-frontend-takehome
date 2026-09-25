@@ -18,7 +18,7 @@ export class ApiError extends Error {
   constructor(
     //HTTP status, or 0 when the request never reached the server.
     readonly status: number,
-    //Error code from the API, e.g. "quote expired", or "network error".
+    //Error code from the API, e.g. "QUOTE_EXPIRED", or "NETWORK_ERROR" when the request never arrived.
     readonly code: string,
     message: string,
   ) {

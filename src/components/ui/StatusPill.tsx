@@ -18,7 +18,6 @@ interface StatusPillProps {
   children: ReactNode;
 }
 
-
 export function StatusPill({ tone = "neutral", icon, className, children }: StatusPillProps) {
   return (
     <span

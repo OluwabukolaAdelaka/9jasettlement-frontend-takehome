@@ -9,7 +9,6 @@ export function fail(status: number, code: ApiErrorCode, message: string): Serve
   return { ok: false, status, code, message };
 }
 
-//Generates a random URL-safe ID with the given prefix.
 export function randomId(prefix: string): string {
   return `${prefix}_${crypto.randomUUID().replace(/-/g, "").slice(0, 10)}`;
 }

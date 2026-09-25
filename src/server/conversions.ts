@@ -22,8 +22,8 @@ export function parseConversionRequest(body: unknown): ServerResult<ParsedConver
   return { ok: true, status: 200, body: { quoteId, idempotencyKey } };
 }
 
-//Validates everything before changing state, then applies the conversion synchronously so failed requests cannot move money or partially update state.
-
+//Every check runs before anything changes, and the update itself has no await in it,
+//so a failed request can never move money and two requests can never interleave mid-conversion.
 export function executeConversion(
   state: ServerState,
   body: unknown,
@@ -69,7 +69,6 @@ export function executeConversion(
     return fail(422, "INSUFFICIENT_FUNDS", `You no longer have enough ${quote.sellCurrency} for this conversion.`);
   }
 
-  //All checks passed: apply the conversion together.
   const conversion: ConversionResponse = {
     id: newId(),
     quoteId: quote.id,

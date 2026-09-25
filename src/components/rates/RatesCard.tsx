@@ -27,10 +27,9 @@ export function RatesCard() {
   );
 }
 
-
 function RatesContent({ base }: { base: Currency }) {
   const { query, board } = useRateBoard(base);
-  
+
   return (
     <div className="flex flex-col gap-3">
       <FreshnessStatus updatedAt={query.dataUpdatedAt} retrying={query.failureCount > 0} />
@@ -38,7 +37,6 @@ function RatesContent({ base }: { base: Currency }) {
     </div>
   );
 }
-
 
 function RatesBody({ base, query, board }: { base: Currency } & ReturnType<typeof useRateBoard>) {
   if (board) return <RateList base={base} board={board} />;

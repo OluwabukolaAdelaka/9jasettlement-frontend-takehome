@@ -17,7 +17,6 @@ function unitsPerBase(rates: RatesAgainstBase, base: Currency, currency: Currenc
   return rate === undefined ? null : new Big(rate);
 }
 
-//Converts all balances to the display currency and adds them together.
 //Rounds only once at the end to avoid rounding errors.
 export function portfolioTotal(
   balances: readonly CurrencyAmount[],
@@ -32,7 +31,7 @@ export function portfolioTotal(
   const missingRates: Currency[] = [];
 
   for (const balance of balances) {
-    //ZEro balance don't need a rate.
+    //ZEro balances don't need a rate.
     if (balance.minor === 0n) continue;
 
     const currencyPerBase = unitsPerBase(rates, base, balance.currency);

@@ -13,7 +13,6 @@ interface FreshnessStatusProps {
   className?: string;
 }
 
-//Shows the last update time and a Stale badge after 15 seconds.
 export function FreshnessStatus({ updatedAt, retrying, className }: FreshnessStatusProps) {
   const now = useNow();
   const hasData = updatedAt !== undefined && updatedAt > 0;
@@ -31,7 +30,7 @@ export function FreshnessStatus({ updatedAt, retrying, className }: FreshnessSta
           "Updating…"
         )}
       </span>
-      {/* Keeps the badge accessible when it appears. */}
+      {/* Always rendered, so the badge is announced once when it appears, not on every poll. */}
       <span aria-live="polite">
         {stale && (
           <StatusPill tone="warning" icon={<AlertIcon width={12} height={12} />}>

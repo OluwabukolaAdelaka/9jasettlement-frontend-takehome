@@ -3,7 +3,6 @@ import type { Balance } from "@/hooks/useBalances";
 import { Money } from "@/components/ui/Money";
 import { cx } from "@/lib/cx";
 
-
 export function BalanceList({ balances }: { balances: Balance[] }) {
   return (
     <ul className="divide-y divide-line rounded-xl border border-line">

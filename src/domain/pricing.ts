@@ -2,7 +2,6 @@ import Big from "big.js";
 import { type Currency, MINOR_DIGITS } from "./currency";
 import { isUsableRate, type RatesAgainstBase } from "./rates";
 
-
 export const RATE_DECIMALS = 8;
 
 //Fee: 0.5% in basis points, so calculations stay in BigInt.
@@ -19,14 +18,13 @@ function unitsPerBase(rates: RatesAgainstBase, base: Currency, currency: Currenc
   return new Big(rate);
 }
 
-
 export function midRate(rates: RatesAgainstBase, base: Currency, sell: Currency, buy: Currency): Big {
   return unitsPerBase(rates, base, buy)
     .div(unitsPerBase(rates, base, sell))
     .round(RATE_DECIMALS, Big.roundHalfEven);
 }
 
-//Applies the spread and rounds down
+//Rounded down so rounding never favours the user beyond the spread.
 export function applySpread(mid: Big): Big {
   return mid.times(new Big(1).minus(SPREAD)).round(RATE_DECIMALS, Big.roundDown);
 }
@@ -58,7 +56,6 @@ export function buyToSellMinor(buyMinor: bigint, rate: Big, sell: Currency, buy:
     .div(pow10(MINOR_DIGITS[buy]));
   return BigInt(sellMinor.round(0, Big.roundUp).toFixed(0));
 }
-
 
 export type FixedAmount = { side: "sell"; amount: bigint } | { side: "buy"; amount: bigint };
 

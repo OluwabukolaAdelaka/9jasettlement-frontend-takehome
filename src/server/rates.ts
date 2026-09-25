@@ -19,7 +19,6 @@ export function driftRates(
   return usdRates;
 }
 
-//Converts USD rates to the selected base currency.
 export function ratesAgainst(usdRates: Record<Currency, Big>, base: Currency): RatesAgainstBase {
   const rates: RatesAgainstBase = {};
   for (const currency of CURRENCIES) {

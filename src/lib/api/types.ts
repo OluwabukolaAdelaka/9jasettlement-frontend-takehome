@@ -79,7 +79,6 @@ export type DebugActionRequest =
   | { action: "forceNextConversionExpired" }
   | { action: "resetBalances" };
 
-//Error codes returned by the mock API.
 export type ApiErrorCode =
   | "INVALID_BASE"
   | "INVALID_REQUEST"

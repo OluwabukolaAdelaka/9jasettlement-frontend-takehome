@@ -8,7 +8,6 @@ const STYLES: Record<RateDirection, { className: string; label: string }> = {
   unchanged: { className: "bg-canvas text-ink-muted", label: "Unchanged since last update" },
 };
 
-
 export function DirectionIndicator({ direction }: { direction: RateDirection }) {
   const style = STYLES[direction];
   return (

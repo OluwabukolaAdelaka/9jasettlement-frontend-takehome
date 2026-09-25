@@ -10,7 +10,6 @@ interface StateMessageProps {
   className?: string;
 }
 
-
 export function StateMessage({ kind, title, description, action, className }: StateMessageProps) {
   const isError = kind === "error";
   return (

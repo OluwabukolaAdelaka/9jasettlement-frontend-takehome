@@ -1,6 +1,5 @@
 import { Skeleton } from "@/components/ui/Skeleton";
 
-
 export function RateListSkeleton() {
   return (
     <div role="status">

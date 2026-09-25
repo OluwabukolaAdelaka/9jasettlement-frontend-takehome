@@ -9,7 +9,6 @@ export type RateDirection = "up" | "down" | "unchanged";
 //Allows positive numbers with up to 8 decimal places.
 const RATE_PATTERN = /^\d+(\.\d{1,8})?$/;
 
-//Checks that the rate is valid and greater than zero.
 export function isUsableRate(value: string | undefined): value is string {
   return value !== undefined && RATE_PATTERN.test(value) && new Big(value).gt(0);
 }
@@ -34,10 +33,8 @@ export function rateDirections(
   return directions;
 }
 
-
 const rateFormatters = new Map<string, Intl.NumberFormat>();
 
-//Formats rates for display with 2–8 decimal places.
 export function formatRate(rate: string, locale?: string): string {
   const key = locale ?? "";
   let formatter = rateFormatters.get(key);

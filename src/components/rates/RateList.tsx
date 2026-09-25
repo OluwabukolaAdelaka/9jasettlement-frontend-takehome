@@ -8,7 +8,6 @@ interface RateListProps {
   board: RateBoard;
 }
 
-
 export function RateList({ base, board }: RateListProps) {
   const quoteCurrencies = CURRENCIES.filter((currency) => currency !== base);
 
@@ -33,7 +32,7 @@ export function RateList({ base, board }: RateListProps) {
               </div>
             </div>
 
-            
+
             {rate ? (
               <div className="flex items-center gap-2">
                 <DirectionIndicator direction={board.directions[currency] ?? "unchanged"} />

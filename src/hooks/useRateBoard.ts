@@ -23,13 +23,12 @@ export interface RateBoard {
   directions: Partial<Record<Currency, RateDirection>>;
 }
 
-//Live rates and their movement since the last update.
 export function useRateBoard(base: Currency) {
   const query = useRates(base);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
 
-  //Track the previous rates when new data arrives.
-  //Update during render to keep the previous value.
+  //Remember the rates each new response replaced. Updating state during render (not in an effect)
+  //is React's recommended way to track a previous value.
   if (query.data && (snapshot?.updatedAt !== query.dataUpdatedAt || snapshot.base !== base)) {
     const sameBase = snapshot?.base === base;
     const previous = sameBase ? snapshot.current : undefined;

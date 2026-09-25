@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { cx } from "@/lib/cx";
 
 interface CardProps {
-  //Links the section to its heading for accessibility.
   id: string;
   title: string;
   description?: string;
@@ -10,7 +9,6 @@ interface CardProps {
   className?: string;
   children: ReactNode;
 }
-
 
 export function Card({ id, title, description, actions, className, children }: CardProps) {
   const headingId = `${id}-heading`;

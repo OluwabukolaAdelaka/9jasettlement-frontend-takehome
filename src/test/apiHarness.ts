@@ -23,10 +23,8 @@ export function resetServer(): ServerState {
   return getState();
 }
 
-
- //Routes fetch() into the real Next.js handlers so tests exercise the UI and mock server together.
- //`conversionDelayMs` keeps conversions open to test double submits.
-
+//Routes fetch() into the real Next.js handlers so tests exercise the UI and mock server together.
+//`conversionDelayMs` keeps conversions open to test double submits.
 export function installFetch({ conversionDelayMs = 0 } = {}) {
   const conversionPosts: unknown[] = [];
 

@@ -15,7 +15,6 @@ interface PortfolioTotalProps {
   display: Currency;
 }
 
-
 export function PortfolioTotal({ balances, display }: PortfolioTotalProps) {
   const rates = useRates(display);
 
@@ -30,7 +29,6 @@ export function PortfolioTotal({ balances, display }: PortfolioTotalProps) {
       </TotalFrame>
     );
   }
-
 
   if (!rates.data) {
     return (

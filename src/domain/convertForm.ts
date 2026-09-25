@@ -21,7 +21,6 @@ export type DraftError =
 
 export type DraftResult = { ok: true; input: ConversionInput } | { ok: false; error: DraftError };
 
-//The amount is in the sell currency when selling, and the buy currency when receiving.
 export function amountCurrency(values: ConvertFormValues): Currency {
   return values.side === "sell" ? values.sell : values.buy;
 }

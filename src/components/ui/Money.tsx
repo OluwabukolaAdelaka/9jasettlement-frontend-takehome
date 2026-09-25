@@ -8,7 +8,7 @@ interface MoneyProps {
   className?: string;
 }
 
-//Frmats all amounts the same way across the app.
+//One formatter for every amount on screen, so quote, receipt and history can never disagree.
 export function Money({ minor, currency, className }: MoneyProps) {
   return <span className={cx("tabular-nums", className)}>{formatMoney(minor, currency)}</span>;
 }

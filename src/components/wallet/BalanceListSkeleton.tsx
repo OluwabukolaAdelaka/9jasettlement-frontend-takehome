@@ -1,7 +1,6 @@
 import { CURRENCIES } from "@/domain/currency";
 import { Skeleton } from "@/components/ui/Skeleton";
 
-
 export function BalanceListSkeleton() {
   return (
     <div role="status">

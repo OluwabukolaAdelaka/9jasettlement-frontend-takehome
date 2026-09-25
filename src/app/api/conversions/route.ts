@@ -12,7 +12,6 @@ export async function GET() {
   return jsonResponse(body);
 }
 
-
 export async function POST(request: Request) {
   const body = await readJson(request);
   await simulateLatency();

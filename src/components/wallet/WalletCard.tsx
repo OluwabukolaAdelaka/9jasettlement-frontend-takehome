@@ -31,7 +31,6 @@ export function WalletCard() {
   );
 }
 
-
 function BalancesContent({ balances }: { balances: ReturnType<typeof useBalances> }) {
   if (balances.isPending) return <BalanceListSkeleton />;
 

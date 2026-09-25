@@ -63,10 +63,8 @@ export function toQuoteResponse(quote: StoredQuote, nowMs: number): QuoteRespons
   };
 }
 
-
-//Prices at the current mid-market rate with spread and fee, 
-//checks the balance, and locks the result for 30 seconds.
-
+//Prices at the current mid-market rate with spread and fee, checks sell + fee fits the balance,
+//and locks the result for 30 seconds.
 export function createQuote(
   state: ServerState,
   body: unknown,

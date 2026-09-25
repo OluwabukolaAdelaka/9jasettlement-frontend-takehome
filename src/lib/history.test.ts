@@ -36,23 +36,27 @@ describe("mergeHistory", () => {
 });
 
 describe("parseStoredHistory", () => {
-  it("reads what was saved", () => {
-    const saved = [conversion("a", "2026-09-24T10:00:00.000Z")];
+  const empty = { serverInstance: null, conversions: [] };
+
+  it("reads what was saved, with the server instance it came from", () => {
+    const saved = { serverInstance: "srv-1", conversions: [conversion("a", "2026-09-24T10:00:00.000Z")] };
     expect(parseStoredHistory(JSON.stringify(saved))).toEqual(saved);
   });
 
   it.each([
     ["nothing", null],
     ["broken JSON", "{not json"],
-    ["a non-array", '{"id":"a"}'],
-  ])("returns an empty list for %s", (_, raw) => {
-    expect(parseStoredHistory(raw)).toEqual([]);
+    ["the old v1 format (a bare array)", JSON.stringify([conversion("a", "2026-09-24T10:00:00.000Z")])],
+    ["an object without conversions", '{"serverInstance":"srv-1"}'],
+  ])("returns empty history for %s", (_, raw) => {
+    expect(parseStoredHistory(raw)).toEqual(empty);
   });
 
   it("drops malformed entries but keeps valid ones", () => {
     const valid = conversion("a", "2026-09-24T10:00:00.000Z");
     const floatAmount = { ...conversion("b", "2026-09-24T10:00:00.000Z"), sellAmount: "100.5" };
     const badCurrency = { ...conversion("c", "2026-09-24T10:00:00.000Z"), buyCurrency: "BTC" };
-    expect(parseStoredHistory(JSON.stringify([valid, floatAmount, badCurrency, null]))).toEqual([valid]);
+    const raw = JSON.stringify({ serverInstance: "srv-1", conversions: [valid, floatAmount, badCurrency, null] });
+    expect(parseStoredHistory(raw)).toEqual({ serverInstance: "srv-1", conversions: [valid] });
   });
 });

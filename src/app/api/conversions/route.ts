@@ -8,7 +8,8 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   await simulateLatency();
-  const body: ConversionsResponse = { conversions: getState().conversions };
+  const state = getState();
+  const body: ConversionsResponse = { conversions: state.conversions, serverInstance: state.instanceId };
   return jsonResponse(body);
 }
 

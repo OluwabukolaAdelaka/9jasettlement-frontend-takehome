@@ -37,7 +37,8 @@ export function useConfirmConversion() {
     setState({ phase: "submitting", quoteId: quote.id });
     try {
       const response = await createConversion({ quoteId: quote.id, idempotencyKey });
-      saveLocalHistory(mergeHistory([response], loadLocalHistory()));
+      const stored = loadLocalHistory();
+      saveLocalHistory({ ...stored, conversions: mergeHistory([response], stored.conversions) });
       setState({ phase: "done", receipt: toConversionRecord(response) });
     } catch (error) {
       setState({ phase: "failed", quoteId: quote.id, error: toApiError(error) });

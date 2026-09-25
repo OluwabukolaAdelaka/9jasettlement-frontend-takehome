@@ -110,7 +110,7 @@ On the server, a quote can also be used only once, even with a different key, an
 
 Every endpoint adds 200–1,500 ms of latency, except `/api/debug`. Errors use `{ "error": { "code", "message" } }`. Other codes: `INVALID_REQUEST`, `SAME_CURRENCY`, `AMOUNT_TOO_SMALL`, `QUOTE_NOT_FOUND`, `QUOTE_ALREADY_USED`, `IDEMPOTENCY_KEY_REUSED`, `INVALID_BASE`, `RATES_UNAVAILABLE`.
 
-**In-memory state:** there's no database. State lives in the server process (on `globalThis`), so it resets when Vercel restarts the function, and separate function instances don't share it. To keep history across a page refresh anyway, each completed conversion is also saved in `localStorage` and merged with the server's list (one entry per ID, newest first). Balances come only from the server, so a restart resets them to the starting values.
+**In-memory state:** there's no database. State lives in the server process (on `globalThis`), so it resets when Vercel restarts the function, and separate function instances don't share it. Each completed conversion is also saved in `localStorage` and merged with the server's list (one entry per ID, newest first), so history survives a page refresh. The saved copy is tagged with a random server instance ID. If the server has restarted (new ID, starting balances), the browser drops its copy, so history never shows conversions the balances no longer reflect.
 
 ## Testing
 
@@ -128,7 +128,7 @@ Every endpoint adds 200–1,500 ms of latency, except `/api/debug`. Errors use `
   - editing invalidates the quote
   - same-currency and over-balance conversions are blocked
   - the whole flow works with the keyboard only
-- History: a conversion shows up, its receipt opens, and it survives a remount and a server restart.
+- History: a conversion shows up, its receipt opens, it survives a page refresh, and it resets together with balances when the server restarts.
 
 ## Accessibility and responsive layout
 - Semantic landmarks, one `h1`, a labelled `h2` section per card, and a skip link.
@@ -139,7 +139,7 @@ Every endpoint adds 200–1,500 ms of latency, except `/api/debug`. Errors use `
 - Works at 375px: long names shorten with "…", and the rates board hides its code badge on small screens.
 
 ## Trade-offs (what I chose not to do)
-- No database. In-memory state, as the brief allows, plus a `localStorage` copy for history. Balances can reset when Vercel restarts the function.
+- No database. In-memory state, as the brief allows. When Vercel restarts the function, balances and history reset together.
 - No stretch goals (sparkline, SSE, locale switcher, dark mode, Playwright). The brief favours a polished core, and I spent the time on correctness and tests instead.
 - No end-to-end browser tests. The component tests cover the full flow against the real route handlers, but not a real browser.
 - Mock API responses aren't schema-validated in the client. They're treated as a trusted boundary (typed, but not checked at runtime). Stored history *is* validated, because `localStorage` can hold anything.

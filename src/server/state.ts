@@ -23,6 +23,8 @@ export interface StoredQuote {
 }
 
 export interface ServerState {
+  //New on every server start, so the browser can tell its saved history belongs to an earlier, reset server.
+  instanceId: string;
   balances: Record<Currency, bigint>;
   usdRates: Record<Currency, Big>;
   quotes: Map<string, StoredQuote>;
@@ -63,6 +65,7 @@ export function initialBalances(): Record<Currency, bigint> {
 
 export function createInitialState(): ServerState {
   return {
+    instanceId: crypto.randomUUID(),
     balances: initialBalances(),
     usdRates: mapValues(INITIAL_USD_RATES, (rate) => new Big(rate)),
     quotes: new Map(),

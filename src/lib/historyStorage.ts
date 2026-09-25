@@ -1,8 +1,17 @@
 import { isCurrency } from "@/domain/currency";
 import type { ConversionResponse } from "./api/types";
 
-//Browser copy of completed conversions, so history survives a refresh even if the serverless function restarted.
-const STORAGE_KEY = "swapr.history.v1";
+//Browser copy of completed conversions, tagged with the server instance they came from.
+//It survives page refreshes; if the server restarts (fresh balances), the copy is dropped so history and balances agree.
+const STORAGE_KEY = "swapr.history.v2";
+const LEGACY_KEY = "swapr.history.v1";
+
+export interface StoredHistory {
+  serverInstance: string | null;
+  conversions: ConversionResponse[];
+}
+
+const EMPTY: StoredHistory = { serverInstance: null, conversions: [] };
 const INTEGER = /^\d+$/;
 
 function isConversion(value: unknown): value is ConversionResponse {
@@ -31,28 +40,35 @@ function isConversion(value: unknown): value is ConversionResponse {
 }
 
 //Ignores anything malformed rather than letting a bad entry break the page.
-export function parseStoredHistory(raw: string | null): ConversionResponse[] {
-  if (!raw) return [];
+export function parseStoredHistory(raw: string | null): StoredHistory {
+  if (!raw) return EMPTY;
   try {
     const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter(isConversion) : [];
+    if (typeof parsed !== "object" || parsed === null || !("conversions" in parsed)) return EMPTY;
+    const { conversions } = parsed;
+    const serverInstance = "serverInstance" in parsed ? parsed.serverInstance : null;
+    return {
+      serverInstance: typeof serverInstance === "string" ? serverInstance : null,
+      conversions: Array.isArray(conversions) ? conversions.filter(isConversion) : [],
+    };
   } catch {
-    return [];
+    return EMPTY;
   }
 }
 
 //Storage can be unavailable (private mode, blocked site data): history then just comes from the server.
-export function loadLocalHistory(): ConversionResponse[] {
+export function loadLocalHistory(): StoredHistory {
   try {
+    window.localStorage.removeItem(LEGACY_KEY);
     return parseStoredHistory(window.localStorage.getItem(STORAGE_KEY));
   } catch {
-    return [];
+    return EMPTY;
   }
 }
 
-export function saveLocalHistory(conversions: ConversionResponse[]): void {
+export function saveLocalHistory(history: StoredHistory): void {
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(conversions));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
   } catch {
     //Not fatal: the server still has the history for this session.
   }

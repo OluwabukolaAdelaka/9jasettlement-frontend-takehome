@@ -67,6 +67,7 @@ export interface ConversionResponse {
 //Conversions are returned newest first.
 export interface ConversionsResponse {
   conversions: ConversionResponse[];
+  serverInstance: string;
 }
 
 export interface DebugStateResponse {

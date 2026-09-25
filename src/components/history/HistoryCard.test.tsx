@@ -34,7 +34,7 @@ function renderApp() {
   );
 }
 
-it("shows a completed conversion, opens its receipt, and survives a refresh and server restart", async () => {
+it("shows a completed conversion, opens its receipt, survives a refresh, and resets with the server", async () => {
   const user = userEvent.setup();
   const app = renderApp();
   expect(await screen.findByText("No conversions yet")).toBeInTheDocument();
@@ -57,11 +57,15 @@ it("shows a completed conversion, opens its receipt, and survives a refresh and 
   expect(history.getByText("Total debited")).toBeInTheDocument();
   expect(history.getByText("$100.50")).toBeInTheDocument();
 
-  //Page refresh + serverless restart: the app remounts and the server's memory is empty.
+  //Page refresh: the app remounts against the same server.
   app.unmount();
-  resetServer();
-  renderApp();
-
+  const refreshed = renderApp();
   const restored = within(screen.getByRole("region", { name: "History" }));
   expect(await restored.findByRole("button", { name: /USD → NGN/ })).toHaveTextContent("Received ₦149,250.00");
+
+  //Serverless restart: balances are back to the start, so history must not show conversions they no longer reflect.
+  refreshed.unmount();
+  resetServer();
+  renderApp();
+  expect(await screen.findByText("No conversions yet")).toBeInTheDocument();
 });
